@@ -1,6 +1,6 @@
 # 数字图像处理教学平台 — 部署文档（Cloudflare Tunnel）
 
-> 西南交通大学希望学院 · 基础部  
+> 西南交通大学希望学院 · 人工智能学院 
 > 设计：李康乐 | 技术支持：李康乐  
 > 部署域名：https://dip.likangle.top  
 > 应用端口：9527 → cloudflared → Cloudflare Tunnel（公网）
