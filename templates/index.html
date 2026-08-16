@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西南交通大学希望学院 - 数字图像处理教学平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="home-page">
+
+    <div class="home-container">
+        <!-- 校徽装饰线 -->
+        <div class="home-badge">
+            <div class="badge-line"></div>
+            <div class="badge-diamond"></div>
+            <div class="badge-line"></div>
+        </div>
+
+        <!-- 主标题 -->
+        <h1 class="home-title">数字图像处理教学平台</h1>
+
+        <!-- 副标题信息 -->
+        <div class="home-info">
+            <div class="info-item">
+                <span class="info-label">院　校</span>
+                <span class="info-value">西南交通大学希望学院</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">部　门</span>
+                <span class="info-value">人工智能学院</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">平台设计</span>
+                <span class="info-value">李康乐</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">技术支持</span>
+                <span class="info-value">李康乐</span>
+            </div>
+        </div>
+
+        {% if current_user %}
+        <!-- 已登录：进入平台 + 用户信息 -->
+        <a href="{{ url_for('chapters') }}" class="btn-enter">
+            <span>进入平台</span>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4 10H16M12 6L16 10L12 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </a>
+        <div class="home-login">
+            <span>欢迎，<strong>{{ current_user.display_name }}（{{ current_user.student_id }}）</strong></span>
+            {% if current_user.role in ('teacher', 'admin') %}
+                <a href="/auth/dashboard">数据中台</a>
+            {% endif %}
+            <a href="javascript:void(0)" onclick="openPwdModal()" style="color:#ffa94d;font-size:12px;">修改密码</a>
+            <a href="/auth/logout">退出</a>
+        </div>
+        {% else %}
+        <!-- 未登录：登录表单 -->
+        <div class="home-login-form">
+            <form id="homeLoginForm" onsubmit="handleHomeLogin(event)">
+                <div class="hlf-group">
+                    <input type="text" id="homeStudentId" placeholder="学号 / 工号" required>
+                </div>
+                <div class="hlf-group">
+                    <input type="password" id="homePassword" placeholder="密码" required>
+                </div>
+                <button type="submit" class="btn-enter" style="width:100%;border:none;cursor:pointer;margin-top:4px;justify-content:center;">
+                    <span>进入平台</span>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 10H16M12 6L16 10L12 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+            <p class="hlf-msg" id="homeLoginMsg"></p>
+        </div>
+        {% endif %}
+
+        <!-- 底部版权 -->
+        <p class="home-footer">Copyright &copy; 2026 西南交通大学希望学院 · 数字图像处理教学平台</p>
+    </div>
+
+<style>
+.home-login-form { margin: 24px auto 0; width: 100%; max-width: 360px; }
+.hlf-group { margin-bottom: 12px; }
+.hlf-group input {
+    width: 100%; padding: 11px 14px; border: 1px solid rgba(100,140,255,0.25);
+    border-radius: 8px; background: rgba(15,20,50,0.6); color: #e0e0e0;
+    font-size: 14px; outline: none; box-sizing: border-box; transition: border-color 0.3s;
+}
+.hlf-group input:focus { border-color: #5a8aff; }
+.hlf-msg { text-align: center; margin-top: 10px; font-size: 13px; min-height: 20px; }
+.hlf-msg.error { color: #ff6b6b; }
+.hlf-msg.success { color: #51cf66; }
+</style>
+<script>
+async function handleHomeLogin(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>登录中...</span>';
+    const msg = document.getElementById('homeLoginMsg');
+    msg.textContent = ''; msg.className = 'hlf-msg';
+    try {
+        const resp = await fetch('/auth/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                student_id: document.getElementById('homeStudentId').value.trim(),
+                password: document.getElementById('homePassword').value
+            })
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            msg.textContent = '登录成功，正在跳转...'; msg.className = 'hlf-msg success';
+            setTimeout(() => { window.location.href = '/chapters'; }, 500);
+        } else {
+            msg.textContent = data.message; msg.className = 'hlf-msg error';
+            btn.disabled = false; btn.innerHTML = origHTML;
+        }
+    } catch(err) {
+        msg.textContent = '网络错误'; msg.className = 'hlf-msg error';
+        btn.disabled = false; btn.innerHTML = origHTML;
+    }
+}
+</script>
+{% if current_user %}
+<!-- 修改密码弹窗 -->
+<div class="modal-overlay" id="changePasswordModal" style="display:none;">
+    <div class="modal-box">
+        <h3>修改密码</h3>
+        <div class="form-group">
+            <label>旧密码</label>
+            <input type="password" id="cpOldPassword" placeholder="请输入旧密码">
+        </div>
+        <div class="form-group">
+            <label>新密码</label>
+            <input type="password" id="cpNewPassword" placeholder="请输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+            <label>确认新密码</label>
+            <input type="password" id="cpConfirmPassword" placeholder="请再次输入新密码">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitChangePassword()">确认修改</button>
+            <button class="btn btn-secondary" onclick="closeChangePasswordModal()">取消</button>
+        </div>
+        <p class="form-error" id="cpError" style="display:none;"></p>
+    </div>
+</div>
+<style>
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.modal-box { background:#fff; border-radius:8px; padding:30px; width:380px; max-width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.modal-box h3 { margin:0 0 20px; font-size:18px; }
+.form-group { margin-bottom:15px; }
+.form-group label { display:block; margin-bottom:5px; font-size:14px; color:#555; }
+.form-group input { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px; box-sizing:border-box; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.btn { padding:8px 20px; border:none; border-radius:4px; cursor:pointer; font-size:14px; }
+.btn-primary { background:#004a9f; color:#fff; }
+.btn-secondary { background:#eee; color:#333; }
+.form-error { color:#d32f2f; font-size:13px; margin-top:10px; }
+</style>
+<script>
+function openChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'flex';
+    document.getElementById('cpOldPassword').value = '';
+    document.getElementById('cpNewPassword').value = '';
+    document.getElementById('cpConfirmPassword').value = '';
+    document.getElementById('cpError').style.display = 'none';
+}
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+}
+async function submitChangePassword() {
+    const oldPwd = document.getElementById('cpOldPassword').value;
+    const newPwd = document.getElementById('cpNewPassword').value;
+    const confirmPwd = document.getElementById('cpConfirmPassword').value;
+    const errEl = document.getElementById('cpError');
+    if (!oldPwd || !newPwd || !confirmPwd) { errEl.textContent = '请填写所有字段'; errEl.style.display = 'block'; return; }
+    if (newPwd.length < 6) { errEl.textContent = '新密码至少6位'; errEl.style.display = 'block'; return; }
+    if (newPwd !== confirmPwd) { errEl.textContent = '两次输入的新密码不一致'; errEl.style.display = 'block'; return; }
+    try {
+        const resp = await fetch('/auth/api/change_password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({old_password: oldPwd, new_password: newPwd})
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert('修改成功，请重新登录');
+            window.location.href = '/auth/logout';
+        } else {
+            errEl.textContent = data.error || '修改失败';
+            errEl.style.display = 'block';
+        }
+    } catch(e) {
+        errEl.textContent = '网络错误';
+        errEl.style.display = 'block';
+    }
+}
+</script>
+{% endif %}
+</body>
+
+</html>

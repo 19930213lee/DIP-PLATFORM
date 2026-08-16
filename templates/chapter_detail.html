@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ chapter_title }} - 数字图像处理教学平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ai_sidebar.css') }}">
+    <meta name="user-logged-in" content="true">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+</head>
+
+<body class="chapter-detail-page">
+    <header class="top-bar">
+        <a href="{{ url_for('chapters') }}" class="top-back">&larr; 返回章节选择</a>
+        <span class="top-title">西南交通大学希望学院 · 人工智能学院 · 数字图像处理教学平台</span>
+        <span class="top-user">
+            {% if current_user %}
+                欢迎，<strong>{{ current_user.display_name }}（{{ current_user.student_id }}）</strong>
+                {% if current_user.role in ('teacher', 'admin') %}
+                    <a href="/auth/dashboard">数据中台</a>
+                {% endif %}
+                <a href="javascript:void(0)" onclick="openPwdModal()" style="color:#ffa94d;font-size:12px;">修改密码</a>
+                <a href="/auth/logout">退出</a>
+            {% else %}
+                <a href="/auth/login">登录</a>
+            {% endif %}
+        </span>
+    </header>
+
+    <main class="theory-main">
+        <div class="theory-hero">
+            <span class="theory-chapter-badge">{{ chapter_badge }}</span>
+            <h1>{{ chapter_title }}</h1>
+            <p class="theory-author">作者：李康乐 &nbsp;|&nbsp; 参考教材：冈萨雷斯《数字图像处理》第四版</p>
+        </div>
+
+        <!-- 教学目标卡片 -->
+        <div class="learning-objectives" id="learningObjectives">
+            <div class="lo-header">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+                <span>本章教学目标</span>
+                <span class="lo-subtitle">对标工程教育认证标准毕业要求</span>
+            </div>
+            <div class="lo-grid" id="loGrid"></div>
+            <a class="ppt-download-btn" id="pptDownloadBtn" href="#" download>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                下载本章课件
+            </a>
+        </div>
+
+        <div class="theory-body-wrapper">
+            <nav class="theory-toc" id="theoryToc">
+                <h3>本章目录</h3>
+                <ul id="tocList"></ul>
+            </nav>
+
+            <div class="theory-content" id="theoryContent">
+                <!-- 由JS动态填充 -->
+            </div>
+        </div>
+    </main>
+
+    <button class="scroll-top-btn" id="scrollTopBtn" title="回到顶部">&uarr;</button>
+
+    <script>
+        const CHAPTER_ID = {{ chapter_id }};
+        // AI 助手上下文注入
+        window.AI_CONTEXT = {
+            chapterId: {{ chapter_id }},
+            chapterTitle: '{{ chapter_title }}'
+        };
+    </script>
+    {% if current_user %}
+    <script src="{{ url_for('static', filename='ai_sidebar.js') }}"></script>
+    {% endif %}
+    <script>
+        // ========== 理论数据库 ==========
+        const THEORY_DATA = {
+            1: {
+                title: "第一章：绪论",
+                subtitle: "数字图像处理概述",
+                sections: [
+                    {
+                        id: "intro", title: "1.1 什么是数字图像处理",
+                        content: `
+                        <p><strong>数字图像</strong>是指一个二维函数 $f(x,y)$，其中 $x$ 和 $y$ 是空间（平面）坐标，$f$ 在任意点 $(x,y)$ 处的幅值称为该点图像的<strong>强度</strong>或<strong>灰度</strong>。当 $x$、$y$ 和 $f$ 的幅值都是有限且离散的数值时，该图像就是<strong>数字图像</strong>。</p>
+                        <p><strong>数字图像处理</strong>是指利用数字计算机对数字图像进行处理的过程。它包括三个层次：</p>
+                        <ul>
+                            <li><strong>低级处理</strong>：以输入、输出都是图像为特征的操作，如降噪、对比度增强、图像锐化。</li>
+                            <li><strong>中级处理</strong>：以输入为图像、输出为图像属性为特征的操作，如分割、描述、分类（识别）。</li>
+                            <li><strong>高级处理</strong>：涉及对识别对象的整体理解，执行与人类视觉相关的认知功能。</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "origin", title: "1.2 数字图像处理的起源",
+                        content: `
+                        <p>数字图像处理最早的应用之一出现在20世纪20年代的报纸业。Bartlane电缆图片传输系统将图像编码为5级灰度，通过海底电缆在伦敦和纽约之间传输，将传输时间从一周缩短到不到三小时。</p>
+                        <p>真正的数字图像处理诞生于20世纪60年代，得益于两个关键发展：<strong>数字计算机</strong>的出现和<strong>空间计划</strong>的推动。1964年，美国喷气推进实验室（JPL）使用数字计算机处理了"徘徊者7号"月球探测器传回的数千张月球表面图像，这是数字图像处理历史上的里程碑事件。</p>
+                        <p>医学领域：1971年，Godfrey Hounsfield发明了计算机断层扫描（CT），这项发明后来获得了诺贝尔奖。</p>
+                    `
+                    },
+                    {
+                        id: "fields", title: "1.3 数字图像处理的应用领域",
+                        content: `
+                        <ul>
+                            <li><strong>医学影像</strong>：CT、MRI、PET、超声图像处理、X射线增强、病变检测。</li>
+                            <li><strong>遥感</strong>：卫星图像分析、土地利用分类、环境监测、灾害评估。</li>
+                            <li><strong>工业检测</strong>：产品质量检测、缺陷识别、自动化装配线视觉系统。</li>
+                            <li><strong>安防监控</strong>：人脸识别、车牌识别、行为分析、异常检测。</li>
+                            <li><strong>文档处理</strong>：OCR文字识别、文档扫描增强、表格提取。</li>
+                            <li><strong>娱乐与艺术</strong>：电影特效、游戏渲染、照片美化、数字绘画。</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "steps", title: "1.4 数字图像处理的基本步骤",
+                        content: `
+                        <div class="flowchart">
+
+                            <!-- ===== 第一层：低级处理 ===== -->
+                            <div class="fl-stage">
+                                <div class="fl-stage-label fl-stage-low">低级处理</div>
+                                <div class="fl-stage-nodes">
+                                    <div class="fl-card fl-card-low">图像获取</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-low">图像增强</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-low">图像复原</div>
+                                </div>
+                            </div>
+
+                            <!-- 阶段桥接 -->
+                            <div class="fl-bridge">
+                                <span class="fl-bridge-dot"></span>
+                                <div class="fl-bridge-line"></div>
+                                <span class="fl-bridge-dot"></span>
+                            </div>
+
+                            <!-- ===== 第二层：中级处理 ===== -->
+                            <div class="fl-stage">
+                                <div class="fl-stage-label fl-stage-mid">中级处理</div>
+                                <div class="fl-stage-nodes">
+                                    <div class="fl-card fl-card-mid">彩色处理</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-mid">小波与多分辨率</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-mid">压缩</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-mid">形态学</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-mid">分割</div>
+                                </div>
+                            </div>
+
+                            <!-- 阶段桥接 -->
+                            <div class="fl-bridge">
+                                <span class="fl-bridge-dot"></span>
+                                <div class="fl-bridge-line"></div>
+                                <span class="fl-bridge-dot"></span>
+                            </div>
+
+                            <!-- ===== 第三层：高级处理 ===== -->
+                            <div class="fl-stage">
+                                <div class="fl-stage-label fl-stage-high">高级处理</div>
+                                <div class="fl-stage-nodes">
+                                    <div class="fl-card fl-card-high">表示与描述</div>
+                                    <span class="fl-card-arrow">→</span>
+                                    <div class="fl-card fl-card-high">目标识别</div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <table class="theory-table">
+                            <tr><th>步骤</th><th>说明</th></tr>
+                            <tr><td>图像获取</td><td>通过传感器获取数字图像，包括预处理（如缩放）</td></tr>
+                            <tr><td>图像增强</td><td>操作图像以使其更适合特定应用，如图像的主观质量改善</td></tr>
+                            <tr><td>图像复原</td><td>基于数学或概率模型来改进图像外观，是客观的过程</td></tr>
+                            <tr><td>彩色图像处理</td><td>处理彩色图像，包括色彩模型、伪彩色、全彩色处理</td></tr>
+                            <tr><td>小波与多分辨率</td><td>以不同的分辨率来表示图像，用于压缩和金字塔分解</td></tr>
+                            <tr><td>压缩</td><td>减少图像存储量或传输带宽的技术</td></tr>
+                            <tr><td>形态学处理</td><td>提取图像中表达和描述区域形状的有用分量</td></tr>
+                            <tr><td>分割</td><td>将图像划分为组成区域或目标</td></tr>
+                            <tr><td>表示与描述</td><td>以适合计算机处理的形式表示和描述图像区域</td></tr>
+                            <tr><td>目标识别</td><td>基于描述子为物体赋予标签</td></tr>
+                        </table>
+                    `
+                    },
+                    {
+                        id: "vision", title: "1.5 人类视觉感知简介",
+                        content: `
+                        <p>人眼的结构类似于一个光学系统。晶状体和角膜共同作用将外部场景的影像聚焦到视网膜上。视网膜包含两类光感受器：</p>
+                        <ul>
+                            <li><strong>锥状体</strong>（600万-700万个）：对亮光敏感，负责<strong>彩色视觉</strong>（明视觉），集中在中央凹（fovea）区域。</li>
+                            <li><strong>杆状体</strong>（7500万-1.5亿个）：对弱光敏感，负责<strong>单色/暗视觉</strong>，分布在视网膜外围。</li>
+                        </ul>
+                        <p><strong>韦伯定律</strong>：人眼的主观亮度感知遵循对数规律。可分辨的最小亮度变化 $\\Delta I$ 与背景亮度 $I$ 的比值在很宽的亮度范围内近似为常数：</p>
+                        <div class="formula-box">$$\\frac{\\Delta I_c}{I} \\approx 0.02$$</div>
+                        <p>这一特性解释了为什么对数和伽马变换能有效模拟人眼感知进行图像增强。</p>
+                        <p><strong>同时对比效应</strong>：一个区域的感知亮度不仅取决于其自身的亮度，还受到周围区域亮度的影响。</p>
+                        <p><strong>马赫带效应</strong>：在亮度阶跃边界处，人眼会感知到亮边和暗带，这是侧抑制现象的视觉表现。</p>
+                    `
+                    },
+                    {
+                        id: "imaging", title: "1.6 图像感知与获取",
+                        content: `
+                        <p>图像由<strong>照射源</strong>和场景元素对能量的<strong>反射或吸收</strong>形成。用二维函数表示：</p>
+                        <p>$$f(x,y) = i(x,y) \\cdot r(x,y)$$</p>
+                        <p>其中 $i(x,y)$ 为<strong>照射分量</strong>（$0 &lt; i(x,y) &lt; \\infty$），$r(x,y)$ 为<strong>反射分量</strong>（$0 &lt; r(x,y) &lt; 1$）。</p>
+                        <p>传感器类型包括：CCD（电荷耦合器件）、CMOS（互补金属氧化物半导体）、CID（电荷注入器件）。</p>
+                    `
+                    }
+                ],
+                practices: []
+            },
+            2: {
+                title: "第二章：数字图像基础",
+                subtitle: "采样、量化、像素与基本关系",
+                sections: [
+                    {
+                        id: "sampling", title: "2.1 采样与量化",
+                        content: `
+                        <p>将连续图像 $f(x,y)$ 转换为数字形式需要在坐标和幅值上都进行数字化：</p>
+                        <ul>
+                            <li><strong>采样</strong>：对坐标值进行数字化，将连续空间划分为离散的网格。</li>
+                            <li><strong>量化</strong>：对幅值进行数字化，将连续灰度值映射为离散的灰度级。</li>
+                        </ul>
+                        <p>设将连续图像在空间上采样为 $M \\times N$ 的阵列，每个采样点量化为 $L = 2^k$ 个离散灰度级。数字图像所需存储比特数：</p>
+                        <div class="formula-box">$$b = M \\times N \\times k$$</div>
+                        <p>通常取 $L = 256$（8比特/像素），此时 $k = 8$。</p>
+                        <p><strong>空间分辨率</strong>：图像中可辨别的最小细节的度量。单位：每单位距离的线对数（如 ppi）；或每单位距离的像素点数（如 dpi）。</p>
+                        <p><strong>灰度分辨率</strong>：灰度级中可辨别的最小变化。通常为8比特（256灰度级）。</p>
+                    `
+                    },
+                    {
+                        id: "neighbors", title: "2.2 像素邻域",
+                        content: `
+                        <p>坐标 $(x,y)$ 处的像素 $p$ 的邻域定义：</p>
+                        <ul>
+                            <li><strong>4邻域</strong> $N_4(p)$：$(x+1,y), (x-1,y), (x,y+1), (x,y-1)$</li>
+                            <li><strong>对角邻域</strong> $N_D(p)$：$(x+1,y+1), (x+1,y-1), (x-1,y+1), (x-1,y-1)$</li>
+                            <li><strong>8邻域</strong> $N_8(p)$：$N_4(p) \\cup N_D(p)$</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "adjacency", title: "2.3 邻接、连通与区域",
+                        content: `
+                        <p>令 $V$ 是定义邻接的灰度值集合（如 $V=\\{1\\}$ 表示值为1的像素邻接）。三种邻接类型：</p>
+                        <ul>
+                            <li><strong>4邻接</strong>：$q \\in N_4(p)$ 且像素值均属于 $V$。</li>
+                            <li><strong>8邻接</strong>：$q \\in N_8(p)$ 且像素值均属于 $V$。</li>
+                            <li><strong>m邻接（混合邻接）</strong>：$q \\in N_4(p)$，或 $q \\in N_D(p)$ 且 $N_4(p) \\cap N_4(q)$ 中没有属于 $V$ 的像素。m邻接消除了8邻接可能产生的歧义性（多重路径）。</li>
+                        </ul>
+                        <p><strong>连通性</strong>：从像素 $p$ 到 $q$ 存在一条通路，且通路上所有像素均属于同一灰度集合。</p>
+                        <p><strong>连通分量</strong>：像素集合中任意两个像素之间存在通路的子集。</p>
+                    `
+                    },
+                    {
+                        id: "distance", title: "2.4 距离度量",
+                        content: `
+                        <p>对于像素 $p(x,y)$ 和 $q(s,t)$：</p>
+                        <ul>
+                            <li><strong>欧氏距离</strong>：$D_e(p,q) = \\sqrt{(x-s)^2 + (y-t)^2}$</li>
+                            <li><strong>城区距离（$D_4$距离）</strong>：$D_4(p,q) = |x-s| + |y-t|$</li>
+                            <li><strong>棋盘距离（$D_8$距离）</strong>：$D_8(p,q) = \\max(|x-s|, |y-t|)$</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "operations", title: "2.5 图像基本运算",
+                        content: `
+                        <p><strong>算术运算</strong>：设 $f(x,y)$ 和 $g(x,y)$ 为两幅 $M \\times N$ 图像，算术运算在对应像素对之间执行。</p>
+                        <ul>
+                            <li>加法：$s(x,y) = f(x,y) + g(x,y)$ —— 用于降噪（多帧平均）</li>
+                            <li>减法：$d(x,y) = f(x,y) - g(x,y)$ —— 用于变化检测、运动检测</li>
+                            <li>乘法：$p(x,y) = f(x,y) \\cdot g(x,y)$ —— 用于掩模、阴影校正</li>
+                        </ul>
+                        <p><strong>集合运算</strong>：并集 $A \\cup B$、交集 $A \\cap B$、补集 $A^c$、差集 $A - B$。</p>
+                        <p><strong>仿射变换</strong>：</p>
+                        <div class="formula-box">$$\\begin{bmatrix} x' \\\\ y' \\\\ 1 \\end{bmatrix} = \\begin{bmatrix} a_{11} & a_{12} & t_x \\\\ a_{21} & a_{22} & t_y \\\\ 0 & 0 & 1 \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\\\ 1 \\end{bmatrix}$$</div>
+                    `
+                    },
+                    {
+                        id: "interpolation", title: "2.6 图像插值",
+                        content: `
+                        <p>图像插值用于缩放、旋转等几何变换后的重采样。三种常用方法：</p>
+                        <ul>
+                            <li><strong>最近邻插值</strong>：取最近像素的值，速度最快但有锯齿。</li>
+                            <li><strong>双线性插值</strong>：利用4个最近邻点的灰度在两个方向上做线性插值：</li>
+                        </ul>
+                        <p>$$v(x,y) = ax + by + cxy + d$$</p>
+                        <ul>
+                            <li><strong>双三次插值</strong>：利用16个最近邻点，基于三次多项式，效果最好但计算量大：</li>
+                        </ul>
+                        <p>$$v(x,y) = \\sum_{i=0}^{3}\\sum_{j=0}^{3} a_{ij} x^i y^j$$</p>
+                    `
+                    }
+                ],
+                practices: ['sampling_demo', 'quantization_demo', 'resolution_compare', 'pixel_neighbors', 'distance_metrics', 'interpolation_demo']
+            },
+            3: {
+                title: "第三章：灰度变换与空间滤波",
+                subtitle: "空间域中的图像增强技术",
+                sections: [
+                    {
+                        id: "background", title: "3.1 背景知识",
+                        content: `
+                        <p>空间域处理可由下式表示：</p>
+                        <div class="formula-box">$$g(x,y) = T[f(x,y)]$$</div>
+                        <p>其中 $f(x,y)$ 是输入图像，$g(x,y)$ 是输出图像，$T$ 是对 $f$ 定义在 $(x,y)$ 邻域上的算子。</p>
+                        <p>当邻域为 $1 \\times 1$（单个像素）时，$T$ 变为<strong>灰度变换函数</strong>：</p>
+                        <div class="formula-box">$$s = T(r)$$</div>
+                        <p>当邻域更大时，$T$ 对应<strong>空间滤波器</strong>（模板/核/窗口）。</p>
+                    `
+                    },
+                    {
+                        id: "basic_transform", title: "3.2 基本灰度变换函数",
+                        content: `
+                        <p><strong>1. 图像反转（负片变换）</strong></p>
+                        <p>$$s = L - 1 - r$$</p>
+                        <p>适用于增强嵌入在暗色区域中的白色或灰色细节。</p>
+                        <p><strong>2. 对数变换</strong></p>
+                        <p>$$s = c \\cdot \\log(1 + r)$$</p>
+                        <p>将窄范围的低灰度值映射为宽范围的输出值，扩展暗像素值。常用于傅里叶频谱显示。</p>
+                        <p><strong>3. 幂律（伽马）变换</strong></p>
+                        <div class="formula-box">$$s = c \\cdot r^{\\gamma}$$</div>
+                        <p>$\\gamma &lt; 1$ 扩展暗区，$\\gamma &gt; 1$ 扩展亮区。$\\gamma = 1$ 退化为恒等变换。伽马校正广泛用于显示设备校准。</p>
+                        <p><strong>4. 分段线性变换</strong></p>
+                        <ul>
+                            <li><strong>对比度拉伸</strong>：扩展图像灰度级的动态范围。</li>
+                            <li><strong>灰度级分层</strong>：突出特定灰度范围。</li>
+                            <li><strong>比特平面分层</strong>：分离每个比特平面的贡献。</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "histogram", title: "3.3 直方图处理",
+                        content: `
+                        <p><strong>直方图</strong> $h(r_k) = n_k$ 是灰度级 $r_k$ 在图像中出现的频率统计。归一化直方图：</p>
+                        <p>$$p(r_k) = \\frac{n_k}{MN}, \\quad k = 0,1,\\ldots,L-1$$</p>
+                        <p><strong>直方图均衡化</strong>：通过变换函数 $T(r_k)$ 使输出图像的直方图近似均匀分布：</p>
+                        <div class="formula-box">$$s_k = T(r_k) = (L-1)\\sum_{j=0}^{k} p_r(r_j) = \\frac{L-1}{MN}\\sum_{j=0}^{k} n_j$$</div>
+                        <p>这本质上是输入灰度级的<strong>累积分布函数（CDF）</strong>。</p>
+                        <p><strong>直方图匹配（规定化）</strong>：将输入图像的直方图变换为指定的形状。步骤：</p>
+                        <ol>
+                            <li>对输入图像做均衡化：$s_k = T(r_k)$</li>
+                            <li>对目标直方图做均衡化：$v_q = G(z_q)$</li>
+                            <li>对每个 $s_k$ 找最近的 $v_q$，映射 $r_k \\to z_q$</li>
+                        </ol>
+                        <p><strong>CLAHE（自适应直方图均衡化）</strong>：将图像分为小块，每块独立做均衡化，并用裁剪限制（clip limit）控制噪声放大，最后双线性插值消除块效应。</p>
+                    `
+                    },
+                    {
+                        id: "spatial_filter", title: "3.4 空间滤波基础",
+                        content: `
+                        <p>空间滤波的核心操作是<strong>卷积</strong>（相关）：将滤波器模板在图像上滑动，计算模板覆盖区域的加权和：</p>
+                        <div class="formula-box">$$g(x,y) = \\sum_{s=-a}^{a}\\sum_{t=-b}^{b} w(s,t) \\cdot f(x+s, y+t)$$</div>
+                        <p>其中 $w$ 是尺寸为 $m \\times n$（$m=2a+1, n=2b+1$）的滤波器核。</p>
+                    `
+                    },
+                    {
+                        id: "smoothing", title: "3.5 平滑空间滤波器",
+                        content: `
+                        <p><strong>1. 均值滤波（盒式滤波）</strong></p>
+                        <p>每个像素替换为其邻域内所有像素的平均值。$m \\times n$ 均值滤波器：</p>
+                        <p>$$g(x,y) = \\frac{1}{mn}\\sum_{(s,t) \\in S_{xy}} f(s,t)$$</p>
+                        <p>缺点：模糊边缘，损失细节。</p>
+                        <p><strong>2. 高斯滤波</strong></p>
+                        <p>基于二维高斯函数生成权重：</p>
+                        <div class="formula-box">$$G(x,y) = \\frac{1}{2\\pi\\sigma^2}e^{-\\frac{x^2+y^2}{2\\sigma^2}}$$</p>
+                        <p>$\\sigma$ 越大，平滑程度越强。高斯核是唯一可分离的圆对称核。</p>
+                        <p><strong>3. 中值滤波（统计排序滤波器）</strong></p>
+                        <p>$$\\hat{f}(x,y) = \\text{median}_{(s,t)\\in S_{xy}}\\{f(s,t)\\}$$</p>
+                        <p>对<strong>椒盐噪声</strong>尤其有效，在去噪的同时能保持边缘清晰度。因为噪声像素通常与周围像素值差异很大，中值不受个别极端值影响。</p>
+                        <p><strong>4. 双边滤波</strong></p>
+                        <p>同时考虑空间距离和灰度相似性：</p>
+                        <p>$$BF[I]_p = \\frac{1}{W_p}\\sum_{q\\in S} G_{\\sigma_s}(\\|p-q\\|) \\cdot G_{\\sigma_r}(|I_p - I_q|) \\cdot I_q$$</p>
+                        <p>其中 $\\sigma_s$ 控制空间权重，$\\sigma_r$ 控制灰度相似性权重。能在平滑的同时保持边缘。</p>
+                    `
+                    },
+                    {
+                        id: "sharpening", title: "3.6 锐化空间滤波器",
+                        content: `
+                        <p>锐化的核心是利用<strong>微分</strong>来增强边缘和突变。一阶微分和二阶微分的基本性质：</p>
+                        <ul>
+                            <li>一阶微分在恒定灰度区域为零，在斜坡和台阶处非零。</li>
+                            <li>二阶微分在斜坡起点和终点处非零，在恒定区域和斜坡上为零。</li>
+                            <li>二阶微分对细节（细线、孤立点）的响应更强。</li>
+                        </ul>
+                        <p><strong>1. 拉普拉斯算子（二阶微分）</strong></p>
+                        <p>各向同性的二阶微分算子：</p>
+                        <div class="formula-box">$$\\nabla^2 f = \\frac{\\partial^2 f}{\\partial x^2} + \\frac{\\partial^2 f}{\\partial y^2}$$</div>
+                        <p>离散近似（含对角线）：</p>
+                        <p>$$\\nabla^2 f \\approx f(x+1,y)+f(x-1,y)+f(x,y+1)+f(x,y-1)-4f(x,y)$$</p>
+                        <p>拉普拉斯锐化：$g(x,y) = f(x,y) + c\\nabla^2 f(x,y)$，其中 $c=-1$ 若中心系数为负，$c=1$ 若为正。</p>
+                        <p><strong>2. USM锐化（反锐化掩蔽）</strong></p>
+                        <p>$$g(x,y) = f(x,y) + k \\cdot [f(x,y) - \\bar{f}(x,y)]$$</p>
+                        <p>其中 $\\bar{f}$ 为模糊后的图像，$k$ 为增强系数（$k \\ge 0$）。</p>
+                        <p><strong>3. Sobel算子（一阶微分）</strong></p>
+                        <p>$$G_x = \\begin{bmatrix} -1 & 0 & +1 \\\\ -2 & 0 & +2 \\\\ -1 & 0 & +1 \\end{bmatrix}, \\quad G_y = \\begin{bmatrix} -1 & -2 & -1 \\\\ 0 & 0 & 0 \\\\ +1 & +2 & +1 \\end{bmatrix}$$</p>
+                        <p>梯度幅值：$M(x,y) \\approx |G_x| + |G_y|$ 或 $M = \\sqrt{G_x^2 + G_y^2}$</p>
+                    `
+                    }
+                ],
+                practices: ['image_inversion', 'log_transform', 'contrast_stretch', 'histogram_equalization', 'clahe', 'gamma_correction', 'median_blur', 'gaussian_blur', 'bilateral_filter', 'laplacian', 'unsharp_mask', 'sobel_sharpen']
+            },
+            4: {
+                title: "第四章：频率域滤波",
+                subtitle: "基于傅里叶变换的图像增强",
+                sections: [
+                    {
+                        id: "fourier", title: "4.1 傅里叶变换基础",
+                        content: `
+                        <p>任何周期函数都可以表示为不同频率的正弦和/或余弦之和（傅里叶级数）。对于非周期函数，使用<strong>傅里叶变换</strong>将其表示为连续频率的正弦信号的积分。</p>
+                        <p><strong>二维离散傅里叶变换（2D DFT）</strong>：</p>
+                        <div class="formula-box">$$F(u,v) = \\sum_{x=0}^{M-1}\\sum_{y=0}^{N-1} f(x,y) \\cdot e^{-j2\\pi(ux/M + vy/N)}$$</div>
+                        <p>逆变换（IDFT）：</p>
+                        <p>$$f(x,y) = \\frac{1}{MN}\\sum_{u=0}^{M-1}\\sum_{v=0}^{N-1} F(u,v) \\cdot e^{j2\\pi(ux/M + vy/N)}$$</p>
+                        <p><strong>频谱（幅度谱）</strong>：$|F(u,v)| = \\sqrt{R^2(u,v) + I^2(u,v)}$</p>
+                        <p><strong>相位谱</strong>：$\\phi(u,v) = \\arctan\\left[\\frac{I(u,v)}{R(u,v)}\\right]$</p>
+                        <p><strong>功率谱</strong>：$P(u,v) = |F(u,v)|^2$</p>
+                        <p>通常将 $F(0,0)$ 移到频谱中心（fftshift）以便可视化，$F(0,0)$ 对应于图像的平均灰度。</p>
+                    `
+                    },
+                    {
+                        id: "conv_theorem", title: "4.2 卷积定理",
+                        content: `
+                        <p>卷积定理是频率域滤波的基石：</p>
+                        <div class="formula-box">
+                            $$f(x,y) \\star h(x,y) \\iff F(u,v) \\cdot H(u,v)$$
+                            $$f(x,y) \\cdot h(x,y) \\iff F(u,v) \\star H(u,v)$$
+                        </div>
+                        <p>频率域滤波的基本步骤：</p>
+                        <ol>
+                            <li>计算输入图像的DFT：$F(u,v)$</li>
+                            <li>将 $F(u,v)$ 与滤波器函数 $H(u,v)$ 相乘：$G(u,v) = F(u,v) \\cdot H(u,v)$</li>
+                            <li>计算 $G(u,v)$ 的IDFT得到滤波后的图像 $g(x,y)$</li>
+                        </ol>
+                    `
+                    },
+                    {
+                        id: "lowpass", title: "4.3 低通滤波器（平滑）",
+                        content: `
+                        <p>低通滤波器保留低频分量，衰减高频分量，实现图像平滑。截止频率 $D_0$ 距原点的距离。</p>
+                        <p><strong>1. 理想低通滤波器（ILPF）</strong></p>
+                        <div class="formula-box">$$H(u,v) = \\begin{cases} 1, & D(u,v) \\leq D_0 \\\\ 0, & D(u,v) &gt; D_0 \\end{cases}$$</div>
+                        <p>其中 $D(u,v) = \\sqrt{(u-M/2)^2 + (v-N/2)^2}$。缺点：产生<strong>振铃效应</strong>（ringing），因频域锐截止对应于空间域的sinc函数振荡。</p>
+                        <p><strong>2. 巴特沃斯低通滤波器（BLPF）</strong></p>
+                        <div class="formula-box">$$H(u,v) = \\frac{1}{1 + [D(u,v)/D_0]^{2n}}$$</div>
+                        <p>$n$ 为阶数，$n$ 越大越接近理想滤波器。BLPF在通带和阻带之间平滑过渡，振铃效应较轻。$n=1$ 时无振铃。</p>
+                        <p><strong>3. 高斯低通滤波器（GLPF）</strong></p>
+                        <div class="formula-box">$$H(u,v) = e^{-D^2(u,v)/(2D_0^2)}$$</div>
+                        <p>高斯LPF的傅里叶反变换也是高斯的，因此<strong>完全没有振铃效应</strong>。在保留低频和衰减高频之间达到了最好的平衡。</p>
+                        <p><strong>三种低通滤波器对比</strong>：ILPF截止最锐利但振铃最严重 → BLPF过渡平滑且振铃可控 → GLPF最平滑且无振铃。</p>
+                    `
+                    },
+                    {
+                        id: "highpass", title: "4.4 高通滤波器（锐化）",
+                        content: `
+                        <p>高通滤波器衰减低频分量，保留高频分量，实现图像锐化。</p>
+                        <p><strong>1. 理想高通滤波器（IHPF）</strong></p>
+                        <p>$$H(u,v) = \\begin{cases} 0, & D(u,v) \\leq D_0 \\\\ 1, & D(u,v) &gt; D_0 \\end{cases}$$</p>
+                        <p><strong>2. 巴特沃斯高通滤波器（BHPF）</strong></p>
+                        <div class="formula-box">$$H(u,v) = \\frac{1}{1 + [D_0/D(u,v)]^{2n}}$$</div>
+                        <p><strong>3. 高斯高通滤波器（GHPF）</strong></p>
+                        <p>$$H(u,v) = 1 - e^{-D^2(u,v)/(2D_0^2)}$$</p>
+                        <p><strong>高频强调滤波</strong>：在高通滤波器基础上添加一个偏移量来保留低频成分：</p>
+                        <p>$$H_{hfe}(u,v) = a + b \\cdot H_{hp}(u,v), \\quad a \\ge 0, b &gt; a$$</p>
+                    `
+                    },
+                    {
+                        id: "band", title: "4.5 带通与带阻滤波",
+                        content: `
+                        <p><strong>带阻滤波器</strong>：衰减某个频带范围内的频率，其余频率通过。</p>
+                        <p>理想带阻：$$H(u,v) = \\begin{cases} 0, & D_0 - W/2 \\leq D \\leq D_0 + W/2 \\\\ 1, & \\text{其他} \\end{cases}$$</p>
+                        <p><strong>带通滤波器</strong>：$H_{bp}(u,v) = 1 - H_{br}(u,v)$，即带阻的互补。</p>
+                        <p><strong>陷波滤波器</strong>：阻止（或通过）以某个频率为中心的邻域内的频率，可选择性地消除周期噪声。</p>
+                    `
+                    }
+                ],
+                practices: ['ideal_lowpass', 'ideal_highpass', 'butterworth_lowpass', 'butterworth_highpass', 'gaussian_lowpass', 'gaussian_highpass', 'bandpass_filter']
+            },
+            5: {
+                title: "第五章：图像复原与重建",
+                subtitle: "退化模型与复原技术",
+                sections: [
+                    {
+                        id: "degradation", title: "5.1 图像退化/复原模型",
+                        content: `
+                        <p>图像退化过程在空间域建模为：</p>
+                        <div class="formula-box">$$g(x,y) = h(x,y) \\star f(x,y) + \\eta(x,y)$$</div>
+                        <p>在频率域：$G(u,v) = H(u,v)F(u,v) + N(u,v)$</p>
+                        <p>其中 $h$ 是退化函数（点扩散函数PSF），$\\eta$ 是加性噪声。</p>
+                        <p>复原的目标是获得原始图像 $f(x,y)$ 的估计 $\\hat{f}(x,y)$。</p>
+                    `
+                    },
+                    {
+                        id: "noise_models", title: "5.2 噪声模型",
+                        content: `
+                        <p><strong>1. 高斯噪声</strong>：最常见的噪声模型，源于电子电路噪声和传感器噪声。</p>
+                        <div class="formula-box">$$p(z) = \\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-(z-\\mu)^2/(2\\sigma^2)}$$</div>
+                        <p>$\\mu$ 为均值，$\\sigma$ 为标准差。$\\sigma^2$ 越大噪声越强。</p>
+                        <p><strong>2. 椒盐噪声（脉冲噪声）</strong></p>
+                        <p>$$p(z) = \\begin{cases} P_a, & z = a \\\\ P_b, & z = b \\\\ 0, & \\text{其他} \\end{cases}$$</p>
+                        <p>若 $a=0, b=255$（8比特图像），$P_a$ 为"椒"（黑）概率，$P_b$ 为"盐"（白）概率。</p>
+                        <p><strong>3. 瑞利噪声</strong>：$p(z) = \\frac{2}{b}(z-a)e^{-(z-a)^2/b}, z \\ge a$</p>
+                        <p><strong>4. 指数噪声</strong>：$p(z) = ae^{-az}, z \\ge 0$</p>
+                        <p><strong>5. 均匀噪声</strong>：$p(z) = \\frac{1}{b-a}, a \\le z \\le b$</p>
+                    `
+                    },
+                    {
+                        id: "restoration", title: "5.3 空间域复原方法",
+                        content: `
+                        <p><strong>1. 均值滤波去噪</strong>：算术均值、几何均值、谐波均值、逆谐波均值滤波器。</p>
+                        <p>算术均值：$\\hat{f}(x,y) = \\frac{1}{mn}\\sum_{(s,t)\\in S_{xy}} g(s,t)$</p>
+                        <p><strong>2. 中值滤波去噪</strong>：对椒盐噪声特别有效，在去噪同时保持边缘。</p>
+                        <p><strong>3. 非局部均值去噪（NLM）</strong></p>
+                        <div class="formula-box">$$NL[f](x) = \\frac{1}{C(x)}\\int_\\Omega e^{-\\frac{(G_a*|f(x+.)-f(y+.)|^2)(0)}{h^2}}f(y)dy$$</div>
+                        <p>核心思想：利用图像中所有像素的加权平均，权重由像素邻域间的相似性决定。$h$ 是滤波参数，控制平滑程度。</p>
+                    `
+                    },
+                    {
+                        id: "wiener", title: "5.4 维纳滤波",
+                        content: `
+                        <p>维纳滤波（最小均方误差滤波）寻求使 $E[(f-\\hat{f})^2]$ 最小的估计，统计意义上的最优线性滤波器：</p>
+                        <div class="formula-box">$$\\hat{F}(u,v) = \\left[\\frac{1}{H(u,v)} \\cdot \\frac{|H(u,v)|^2}{|H(u,v)|^2 + S_\\eta(u,v)/S_f(u,v)}\\right] G(u,v)$$</div>
+                        <p>其中 $S_\\eta$ 和 $S_f$ 分别是噪声和未退化图像的功率谱。当噪声为零时退化为逆滤波。</p>
+                    `
+                    }
+                ],
+                practices: ['gaussian_noise', 'sp_noise', 'mean_filter_restore', 'median_restore', 'nlm_denoise', 'wiener_filter', 'sobel', 'canny']
+            },
+            6: {
+                title: "第六章：彩色图像处理",
+                subtitle: "色彩空间与彩色图像增强",
+                sections: [
+                    {
+                        id: "color_fundamentals", title: "6.1 彩色基础",
+                        content: `
+                        <p>人眼视网膜有三种锥状体，分别对<strong>红（约700nm）、绿（约546nm）、蓝（约435nm）</strong>波长最敏感，这是<strong>三基色原理</strong>的生理基础。</p>
+                        <p>根据三基色原理，任何颜色 $C$ 可以表示为：</p>
+                        <p>$$C = R \\cdot \\mathbf{R} + G \\cdot \\mathbf{G} + B \\cdot \\mathbf{B}$$</p>
+                        <p>三基色值（tristimulus values）$X,Y,Z$ 用于定量描述颜色的CIE标准。</p>
+                    `
+                    },
+                    {
+                        id: "color_models", title: "6.2 彩色模型（色彩空间）",
+                        content: `
+                        <p><strong>1. RGB模型</strong>：面向硬件的加色模型。立方体对角线 $(0,0,0)$ 黑到 $(1,1,1)$ 白。</p>
+                        <p><strong>2. HSV/HSI模型</strong>：面向人类感知的模型。</p>
+                        <ul>
+                            <li><strong>色调 $H$</strong>：描述纯色的属性（如红、蓝），用角度表示 $[0°, 360°]$。</li>
+                            <li><strong>饱和度 $S$</strong>：颜色的纯度，$S \\in [0,1]$。$S=0$ 为灰色，$S=1$ 为纯色。</li>
+                            <li><strong>明度 $V/I$</strong>：颜色的亮度，$V \\in [0,1]$。</li>
+                        </ul>
+                        <p><strong>RGB → HSV 转换</strong>：</p>
+                        <p>$$H = \\begin{cases} 0°, & \\text{if } \\Delta=0 \\\\ 60° \\times \\left(\\frac{G'-B'}{\\Delta} \\bmod 6\\right), & \\text{if } C_{max}=R' \\\\ 60° \\times \\left(\\frac{B'-R'}{\\Delta}+2\\right), & \\text{if } C_{max}=G' \\\\ 60° \\times \\left(\\frac{R'-G'}{\\Delta}+4\\right), & \\text{if } C_{max}=B' \\end{cases}$$</p>
+                        <p>$$S = \\begin{cases} 0, & C_{max}=0 \\\\ \\Delta/C_{max}, & \\text{otherwise} \\end{cases}, \\quad V = C_{max}$$</p>
+                        <p><strong>3. CMYK模型</strong>：减色模型，用于印刷（青Cyan、品红Magenta、黄Yellow、黑blacK）。</p>
+                        <p><strong>4. Lab模型</strong>：设备无关的均匀色彩空间，$L$ 亮度，$a$ 绿-红轴，$b$ 蓝-黄轴。</p>
+                    `
+                    },
+                    {
+                        id: "pseudocolor", title: "6.3 伪彩色处理",
+                        content: `
+                        <p><strong>伪彩色</strong>：为灰度值赋予颜色，利用人眼对颜色的高敏感度来增强细节的可辨识度。</p>
+                        <p><strong>强度分层</strong>：将灰度范围 $[0, L-1]$ 分成多个区间，每个区间赋予不同颜色。</p>
+                        <p><strong>灰度-彩色变换</strong>：对灰度图像分别进行三种独立的变换，将结果送入RGB三个通道合成彩色图像。</p>
+                    `
+                    },
+                    {
+                        id: "color_enhancement", title: "6.4 彩色图像增强",
+                        content: `
+                        <p><strong>彩色直方图均衡化</strong>：在HSI空间中仅对亮度分量 $I$ 做均衡化，保持色调和饱和度不变，避免颜色失真。</p>
+                        <p><strong>色调调整</strong>：在HSV空间中旋转色相，实现颜色风格变换。</p>
+                        <p><strong>饱和度增强</strong>：放大饱和度分量 $S$ 使颜色更鲜艳。</p>
+                        <p><strong>色彩平衡</strong>：分别调整R、G、B通道的增益，校正色偏。</p>
+                   `
+                    }
+                ],
+                practices: ['rgb_split', 'rgb_to_hsv', 'hue_adjust', 'saturation_adjust', 'brightness_adjust', 'color_balance', 'pseudo_color', 'color_hist_eq']
+            },
+            7: {
+                title: "第七章：小波变换与多分辨率处理",
+                subtitle: "多尺度图像分析与处理",
+                sections: [
+                    {
+                        id: "pyramid", title: "7.1 图像金字塔",
+                        content: `
+                        <p><strong>图像金字塔</strong>是以多分辨率来表示图像的结构，形如金字塔（底层为原始分辨率，向上逐级降低分辨率）。</p>
+                        <p><strong>高斯金字塔</strong>：通过对低层图像做高斯平滑后下采样得到上层图像：</p>
+                        <div class="formula-box">$$G_{l+1}(i,j) = \\sum_{m=-2}^{2}\\sum_{n=-2}^{2} w(m,n) \\cdot G_l(2i+m, 2j+n)$$</div>
+                        <p>其中 $w$ 是高斯核（权重之和为1），$G_0$ 为原始图像。</p>
+                        <p><strong>拉普拉斯金字塔</strong>：高斯金字塔的每一层上采样后与下一层相减得到：</p>
+                        <p>$$L_l = G_l - \\text{expand}(G_{l+1})$$</p>
+                        <p>拉普拉斯金字塔存储的是<strong>带通信息</strong>（残差），可以无损重构原始图像。</p>
+                    `
+                    },
+                    {
+                        id: "wavelet_intro", title: "7.2 小波变换基础",
+                        content: `
+                        <p>与傅里叶变换使用无限持续时间的正弦波不同，<strong>小波</strong>是具有有限持续时间的小波。小波变换同时提供<strong>时间-频率</strong>（空间-频率）的局部化分析。</p>
+                        <p><strong>连续小波变换（CWT）</strong>：</p>
+                        <div class="formula-box">$$W_\\psi(s, \\tau) = \\int_{-\\infty}^{\\infty} f(t) \\frac{1}{\\sqrt{s}} \\psi^*\\left(\\frac{t-\\tau}{s}\\right) dt$$</div>
+                        <p>其中 $s$ 是尺度（scale），$\\tau$ 是平移量，$\\psi$ 是小波母函数。</p>
+                        <p><strong>离散小波变换（DWT）</strong>：使用滤波器组实现，对尺度和平移进行二进离散化（$s=2^j, \\tau=k2^j$）。</p>
+                    `
+                    },
+                    {
+                        id: "dwt_impl", title: "7.3 二维小波分解",
+                        content: `
+                        <p>二维DWT通过级联的一维变换实现：先对行做一维DWT，再对列做一维DWT。每级分解产生四个子带：</p>
+                        <ul>
+                            <li><strong>LL（低频-低频）</strong>：近似系数，图像的缩略图。</li>
+                            <li><strong>LH（低频-高频）</strong>：水平细节。</li>
+                            <li><strong>HL（高频-低频）</strong>：垂直细节。</li>
+                            <li><strong>HH（高频-高频）</strong>：对角细节。</li>
+                        </ul>
+                        <p>多级分解时，每次对LL子带继续分解。$J$ 级分解产生 $3J+1$ 个子带。</p>
+                    `
+                    },
+                    {
+                        id: "dwt_app", title: "7.4 小波变换的应用",
+                        content: `
+                        <p><strong>小波降噪（阈值法）</strong>：</p>
+                        <ol>
+                            <li>对图像做多级DWT分解</li>
+                            <li>对细节系数（LH, HL, HH）应用阈值处理（硬阈值或软阈值）</li>
+                            <li>用修改后的系数做逆DWT（IDWT）重构</li>
+                        </ol>
+                        <p><strong>硬阈值</strong>：$\\hat{w} = \\begin{cases} w, & |w| \\ge T \\\\ 0, & |w| &lt; T \\end{cases}$</p>
+                        <p><strong>软阈值</strong>：$\\hat{w} = \\begin{cases} \\text{sign}(w)(|w|-T), & |w| \\ge T \\\\ 0, & |w| &lt; T \\end{cases}$</p>
+                        <p>$T = \\sigma\\sqrt{2\\log N}$ 为通用阈值（VisuShrink）。$N$ 是数据点数，$\\sigma$ 是噪声标准差。</p>
+                        <p><strong>多分辨率融合</strong>：将两幅图像分别在拉普拉斯金字塔各层融合（如取最大值或加权），然后重构。</p>
+                    `
+                    }
+                ],
+                practices: ['gaussian_pyramid', 'laplacian_pyramid', 'pyramid_blend', 'dwt_denoise', 'dwt_edge_enhance']
+            },
+            8: {
+                title: "第八章：图像压缩",
+                subtitle: "减少图像数据量的理论与技术",
+                sections: [
+                    {
+                        id: "compression_basics", title: "8.1 压缩基础",
+                        content: `
+                        <p>图像压缩旨在减少表示图像所需的数据量，其基础是消除三种冗余：</p>
+                        <ul>
+                            <li><strong>编码冗余</strong>：不同灰度级的码字长度不匹配其出现概率。最优编码使平均码长等于熵。</li>
+                            <li><strong>像素间冗余（空间冗余）</strong>：相邻像素之间的相关性。</li>
+                            <li><strong>心理视觉冗余</strong>：人眼对不同信息的敏感度不同，可以去除感知不重要的信息。</li>
+                        </ul>
+                        <p><strong>压缩比</strong>：$C_R = n_1 / n_2$，其中 $n_1$ 为原始数据量，$n_2$ 为压缩后数据量。</p>
+                        <p><strong>保真度准则</strong>：</p>
+                        <ul>
+                            <li>均方误差：$MSE = \\frac{1}{MN}\\sum_{x=0}^{M-1}\\sum_{y=0}^{N-1}[\\hat{f}(x,y)-f(x,y)]^2$</li>
+                            <li>峰值信噪比：$PSNR = 10\\log_{10}\\left(\\frac{(2^k-1)^2}{MSE}\\right)$ dB</li>
+                        </ul>
+                    `
+                    },
+                    {
+                        id: "huffman", title: "8.2 哈夫曼编码",
+                        content: `
+                        <p><strong>哈夫曼编码</strong>是一种最优的变长编码方法，码字长度与符号出现概率成反比。编码步骤：</p>
+                        <ol>
+                            <li>统计所有符号（灰度级）的出现概率，按概率降序排列</li>
+                            <li>将两个最小概率的符号合并为一个新节点，概率相加</li>
+                            <li>重复步骤2直到只剩一个根节点</li>
+                            <li>从根节点出发，左分支赋值0，右分支赋值1，得到每个叶节点（符号）的码字</li>
+                        </ol>
+                        <p>平均码长：$L_{avg} = \\sum_{k=0}^{L-1} l(r_k) \\cdot p_r(r_k)$，$l(r_k)$ 为符号 $r_k$ 的码长。</p>
+                    `
+                    },
+                    {
+                        id: "rle", title: "8.3 游程编码（RLE）",
+                        content: `
+                        <p>游程编码将连续重复的符号值替换为 (值, 长度) 对。特别适合二值图像和有大面积均匀区域的图像。例如：</p>
+                        <p>AAAAABBBCC → (A,5)(B,3)(C,2)</p>
+                    `
+                    },
+                    {
+                        id: "jpeg", title: "8.4 JPEG压缩",
+                        content: `
+                        <p>JPEG（Joint Photographic Experts Group）是有损压缩标准，核心流程：</p>
+                        <ol>
+                            <li><strong>色彩空间转换</strong>：RGB → YCbCr，可对色度通道做下采样（4:2:0）</li>
+                            <li><strong>分块</strong>：将每个通道划分为 $8 \\times 8$ 的块</li>
+                            <li><strong>DCT变换</strong>：对每个 $8 \\times 8$ 块做离散余弦变换：</li>
+                        </ol>
+                        <div class="formula-box">$$F(u,v) = \\frac{1}{4}C(u)C(v)\\sum_{x=0}^{7}\\sum_{y=0}^{7} f(x,y)\\cos\\frac{(2x+1)u\\pi}{16}\\cos\\frac{(2y+1)v\\pi}{16}$$</div>
+                        <ol start="4">
+                            <li><strong>量化</strong>：将DCT系数除以量化表（Q矩阵）取整，高频系数通常量化为零。质量因子 $Q$ 越小，量化步长越大，压缩比越大。</li>
+                            <li><strong>熵编码</strong>：对DC系数做DPCM+RLE+霍夫曼编码，对AC系数做Zigzag扫描+RLE+霍夫曼编码。</li>
+                        </ol>
+                    `
+                    }
+                ],
+                practices: ['dct_visualize', 'jpeg_simulate', 'jpeg_compare', 'binary_rle', 'binary_huffman']
+            },
+            9: {
+                title: "第九章：形态学图像处理",
+                subtitle: "基于形状的图像处理技术",
+                sections: [
+                    {
+                        id: "morph_intro", title: "9.1 形态学基础",
+                        content: `
+                        <p><strong>数学形态学</strong>是一种从图像中提取对表达和描述区域形状有意义的图像分量的工具。基本操作定义在二值图像上，也可扩展到灰度图像。</p>
+                        <p>核心概念：<strong>结构元（SE）</strong>——用于探测图像的小集合（或子图像），类似于卷积中的"模板"。结构元有原点（锚点），常用形状包括矩形、十字形、椭圆形。</p>
+                    `
+                    },
+                    {
+                        id: "erosion_dilation", title: "9.2 腐蚀与膨胀",
+                        content: `
+                        <p><strong>腐蚀（Erosion）</strong>：结构元 $B$ 对集合 $A$ 的腐蚀定义为 $B$ 完全包含在 $A$ 内时 $B$ 的原点位置的集合：</p>
+                        <div class="formula-box">$$A \\ominus B = \\{z \\mid (B)_z \\subseteq A\\}$$</div>
+                        <p>效果：缩小前景区域，消除细小物体，断开狭窄连接。腐蚀是"与"操作的推广。</p>
+                        <p><strong>膨胀（Dilation）</strong>：结构元 $B$ 对集合 $A$ 的膨胀定义为 $B$ 的反射与 $A$ 的交集非空的原点集合：</p>
+                        <div class="formula-box">$$A \\oplus B = \\{z \\mid (\\hat{B})_z \\cap A \\neq \\emptyset\\}$$</div>
+                        <p>效果：扩大前景区域，填充小孔和间隙，桥接断裂处。膨胀是"或"操作的推广。</p>
+                        <p>对偶性：$(A \\ominus B)^c = A^c \\oplus \\hat{B}$，$(A \\oplus B)^c = A^c \\ominus \\hat{B}$</p>
+                    `
+                    },
+                    {
+                        id: "open_close", title: "9.3 开运算与闭运算",
+                        content: `
+                        <p><strong>开运算（Opening）</strong>：先腐蚀后膨胀：</p>
+                        <p>$$A \\circ B = (A \\ominus B) \\oplus B$$</p>
+                        <p>效果：平滑物体轮廓，断开狭窄连接，消除细小突出物。可以理解为结构元在A内部所能到达的点的集合。</p>
+                        <p><strong>闭运算（Closing）</strong>：先膨胀后腐蚀：</p>
+                        <p>$$A \\bullet B = (A \\oplus B) \\ominus B$$</p>
+                        <p>效果：平滑轮廓，融合狭窄断裂，填充小孔和凹陷。</p>
+                        <p>性质：开运算和闭运算都是<strong>幂等</strong>的（$(A \\circ B) \\circ B = A \\circ B$），即运算一次后，重复运算结果不变。</p>
+                    `
+                    },
+                    {
+                        id: "morph_gradient", title: "9.4 形态学梯度与顶帽变换",
+                        content: `
+                        <p><strong>形态学梯度</strong>：膨胀与腐蚀的差：</p>
+                        <p>$$G = (A \\oplus B) - (A \\ominus B)$$</p>
+                        <p>效果：突出边缘和轮廓，边缘宽度取决于结构元大小。</p>
+                        <p><strong>顶帽变换（Top-hat）</strong>：原图与开运算的差：</p>
+                        <p>$$T_{hat} = A - (A \\circ B)$$</p>
+                        <p>提取比周围区域亮的物体（细小亮特征）。</p>
+                        <p><strong>黑帽变换（Black-hat）</strong>：闭运算与原图的差：</p>
+                        <p>$$B_{hat} = (A \\bullet B) - A$$</p>
+                        <p>提取比周围区域暗的物体（细小暗特征）。</p>
+                    `
+                    },
+                    {
+                        id: "skeleton", title: "9.5 骨架提取",
+                        content: `
+                        <p><strong>骨架</strong>是区域结构形状的一维中心线表示。通过形态学细化（Thinning）迭代消除边界像素直到区域约化为一像素宽的线。</p>
+                        <p>细化定义为：$A \\otimes B = A - (A \\circledast B)$，其中 $\\circledast$ 是击中-击不中变换。</p>
+                        <p>骨架满足：</p>
+                        <ul>
+                            <li>单像素宽度</li>
+                            <li>与原始区域有相同连通性</li>
+                            <li>位于区域中心位置</li>
+                        </ul>
+                    `
+                    }
+                ],
+                practices: ['erosion_dilation', 'open_close', 'morph_gradient', 'tophat', 'blackhat', 'skeletonize']
+            },
+            10: {
+                title: "第十章：图像分割",
+                subtitle: "将图像划分为有意义的区域",
+                sections: [
+                    {
+                        id: "seg_intro", title: "10.1 分割基础",
+                        content: `
+                        <p><strong>图像分割</strong>是将图像划分为若干有意义的区域或目标的过程。分割基于两个基本特征：<strong>不连续性</strong>（边缘检测）和<strong>相似性</strong>（阈值法、区域生长）。</p>
+                        <p>设 $R$ 代表整幅图像区域，分割将 $R$ 分成 $n$ 个子区域 $R_1, R_2, \\ldots, R_n$，满足：</p>
+                        <ol>
+                            <li>$\\bigcup_{i=1}^{n} R_i = R$（完备性）</li>
+                            <li>$R_i$ 是连通区域</li>
+                            <li>$R_i \\cap R_j = \\emptyset, i \\neq j$（互斥性）</li>
+                            <li>$P(R_i) = \\text{true}$（区域内像素满足同一属性）</li>
+                            <li>$P(R_i \\cup R_j) = \\text{false}, i \\neq j$（不同区域的属性不同）</li>
+                        </ol>
+                    `
+                    },
+                    {
+                        id: "threshold", title: "10.2 阈值分割",
+                        content: `
+                        <p><strong>全局阈值</strong>：选择一个阈值 $T$，将图像二值化：</p>
+                        <p>$$g(x,y) = \\begin{cases} 1, & f(x,y) &gt; T \\\\ 0, & f(x,y) \\leq T \\end{cases}$$</p>
+                        <p><strong>Otsu方法（大津法）</strong>：自动选择使类间方差最大的最优阈值：</p>
+                        <div class="formula-box">$$\\sigma_B^2(T) = P_1(T)\\sigma_1^2(T) + P_2(T)\\sigma_2^2(T)$$</div>
+                        <p>或等价最大化类间方差：</p>
+                        <p>$$\\sigma_B^2(T) = P_1(T)P_2(T)[m_1(T) - m_2(T)]^2$$</p>
+                        <p>遍历所有可能的 $T$ 值（0~255），取使 $\\sigma_B^2$ 最大的 $T$。</p>
+                        <p><strong>自适应阈值</strong>：对图像的不同区域使用不同的阈值，用局部邻域的均值（或高斯加权均值）减去一个常数偏移量。适用于光照不均匀的图像。</p>
+                    `
+                    },
+                    {
+                        id: "region", title: "10.3 区域生长与聚类分割",
+                        content: `
+                        <p><strong>区域生长</strong>：从种子点出发，根据预定义的相似性准则（如灰度差 &lt; 阈值），将邻域像素合并到区域中，迭代直到无新像素加入。</p>
+                        <p><strong>K-means聚类</strong>：将像素分为 $K$ 个簇，最小化簇内平方误差：</p>
+                        <p>$$J = \\sum_{j=1}^{K}\\sum_{i=1}^{n_j} \\|x_i^{(j)} - c_j\\|^2$$</p>
+                        <p>迭代步骤：</p>
+                        <ol>
+                            <li>初始化 $K$ 个聚类中心</li>
+                            <li>将每个像素分配到最近的中心</li>
+                            <li>更新聚类中心为簇内均值</li>
+                            <li>重复第2-3步直到收敛</li>
+                        </ol>
+                        <p><strong>Mean Shift分割</strong>：基于核密度估计的非参数聚类方法，通过梯度上升寻找密度峰值：</p>
+                        <p>$$m(x) = \\frac{\\sum_{x_i\\in N(x)} K(x_i - x) \\cdot x_i}{\\sum_{x_i\\in N(x)} K(x_i - x)}$$</p>
+                        <p>其中 $K$ 是核函数（通常为高斯核），$N(x)$ 是以 $x$ 为中心的邻域。带宽 $h$ 是关键参数。</p>
+                    `
+                    },
+                    {
+                        id: "watershed", title: "10.4 分水岭算法",
+                        content: `
+                        <p>分水岭算法将梯度幅度图像视为地形表面，通过在"集水盆地"之间构建"分水线"来分割图像：</p>
+                        <ol>
+                            <li>计算梯度幅值图像（高低梯度对应边界）</li>
+                            <li>从局部极小值开始"注水"，水逐渐上涨</li>
+                            <li>当不同盆地中的水将要汇合时，建立"水坝"</li>
+                            <li>水坝的集合即为分割边界</li>
+                        </ol>
+                        <p>主要问题：过分割。解决方案：标记控制的分水岭。</p>
+                    `
+                    },
+                    {
+                        id: "grabcut", title: "10.5 GrabCut分割",
+                        content: `
+                        <p>GrabCut是基于图割（Graph Cut）的交互式分割算法，使用高斯混合模型（GMM）对前景和背景建模：</p>
+                        <ol>
+                            <li>用户画矩形框标记大致的前景区域</li>
+                            <li>框外为确定背景 $T_B$，框内为可能前景 $T_U$</li>
+                            <li>用GMM对前景/背景分别建模（通常 $K=5$ 个高斯分量）</li>
+                            <li>构建图并求解最小割，更新像素标签</li>
+                            <li>用新标签重新训练GMM，迭代直到收敛</li>
+                        </ol>
+                    `
+                    }
+                ],
+                practices: ['otsu_threshold', 'adaptive_threshold', 'kmeans_segment', 'mean_shift_segment', 'watershed', 'grabcut']
+            },
+            11: {
+                title: "第十一章：表示和描述",
+                subtitle: "从区域到特征向量的量化表达",
+                sections: [
+                    {
+                        id: "rep_intro", title: "11.1 表示与描述概述",
+                        content: `
+                        <p>分割后的区域需要以适合计算机处理的形式进行<strong>表示</strong>和<strong>描述</strong>。表示是数据层面的（如链码、骨架），描述是特征层面的（如面积、周长、不变矩）。</p>
+                        <p>描述子应满足：<strong>平移不变性、旋转不变性、尺度不变性</strong>。</p>
+                    `
+                    },
+                    {
+                        id: "boundary", title: "11.2 边界表示",
+                        content: `
+                        <p><strong>链码（Freeman链码）</strong>：用方向编码表示边界。4方向链码使用 0,1,2,3；8方向链码使用 0-7 表示8个方向。</p>
+                        <p><strong>多边形近似</strong>：用最少的顶点近似边界形状。道格拉斯-普克（Douglas-Peucker）算法是常用方法。</p>
+                        <p><strong>傅里叶描述子</strong>：将边界坐标 $(x_k, y_k)$ 看作复数序列 $s(k) = x_k + jy_k$，计算其DFT。低频分量对应整体形状，高频分量对应细节。取前 $M$ 个系数即可近似原始形状，且具有旋转、平移、尺度不变性。</p>
+                    `
+                    },
+                    {
+                        id: "moments", title: "11.3 区域描述子",
+                        content: `
+                        <p><strong>Hu不变矩</strong>：基于区域的统计矩，对平移、旋转和缩放具有不变性。二维 $(p+q)$ 阶矩：</p>
+                        <p>$$m_{pq} = \\sum_{x}\\sum_{y} x^p y^q f(x,y)$$</p>
+                        <p>中心矩：$\\mu_{pq} = \\sum_x\\sum_y (x-\\bar{x})^p(y-\\bar{y})^q f(x,y)$</p>
+                        <p>归一化中心矩：$\\eta_{pq} = \\frac{\\mu_{pq}}{\\mu_{00}^\\gamma}$，其中 $\\gamma = \\frac{p+q}{2}+1, p+q \\ge 2$</p>
+                        <p>从 $\\eta_{pq}$ 可导出7个Hu不变矩，用于形状匹配和识别。</p>
+                        <p><strong>凸包</strong>：包含区域中所有点的最小凸多边形的顶点集合。</p>
+                        <p><strong>最小外接矩形</strong>：包含区域的最小面积的矩形（可旋转）。</p>
+                    `
+                    },
+                    {
+                        id: "contour", title: "11.4 轮廓处理",
+                        content: `
+                        <p><strong>轮廓提取</strong>：通过边界跟踪算法（如Suzuki-Abe算法）提取区域的边界轮廓。</p>
+                        <p><strong>轮廓近似</strong>：用更少的顶点近似轮廓曲线。常用道格拉斯-普克算法或Ramer算法。</p>
+                        <p><strong>形状匹配</strong>：基于Hu矩的距离度量（如 $d = \\sum_{i=1}^{7}|\\frac{1}{m_i^A} - \\frac{1}{m_i^B}|$）比较两形状的相似度。</p>
+                    `
+                    }
+                ],
+                practices: ['contour_extract', 'convex_hull', 'min_enclosing', 'contour_approx', 'hu_moments', 'shape_match', 'fourier_descriptor']
+            },
+            12: {
+                title: "第十二章：目标检测与识别",
+                subtitle: "特征检测、匹配与目标定位",
+                sections: [
+                    {
+                        id: "template", title: "12.1 模板匹配",
+                        content: `
+                        <p>模板匹配是用一个小的模板图像在大图像中滑动，计算每个位置的相似度，找出最匹配的位置。</p>
+                        <p><strong>相关性匹配</strong>（归一化互相关 NCC）：</p>
+                        <div class="formula-box">$$R(x,y) = \\frac{\\sum_{x',y'} (T(x',y') \\cdot I(x+x',y+y'))}{\\sqrt{\\sum_{x',y'} T(x',y')^2 \\cdot \\sum_{x',y'} I(x+x',y+y')^2}}$$</div>
+                        <p>$R \\in [-1,1]$，越接近1匹配程度越高。OpenCV支持多种匹配方法：平方差（SQDIFF）、相关（CCORR）、相关系数（CCOEFF）及其归一化版本。</p>
+                    `
+                    },
+                    {
+                        id: "edge_detection", title: "12.2 边缘检测算子",
+                        content: `
+                        <p><strong>Sobel算子</strong>：使用 $3 \\times 3$ 核计算水平和垂直方向的一阶导数近似：</p>
+                        <p>$$G_x = \\begin{bmatrix} -1 & 0 & +1 \\\\ -2 & 0 & +2 \\\\ -1 & 0 & +1 \\end{bmatrix}, \\quad G_y = \\begin{bmatrix} -1 & -2 & -1 \\\\ 0 & 0 & 0 \\\\ +1 & +2 & +1 \\end{bmatrix}$$</p>
+                        <p><strong>Prewitt算子</strong>：与Sobel类似但不加权：</p>
+                        <p>$$G_x = \\begin{bmatrix} -1 & 0 & +1 \\\\ -1 & 0 & +1 \\\\ -1 & 0 & +1 \\end{bmatrix}, \\quad G_y = \\begin{bmatrix} -1 & -1 & -1 \\\\ 0 & 0 & 0 \\\\ +1 & +1 & +1 \\end{bmatrix}$$</p>
+                        <p><strong>Roberts算子</strong>：使用 $2 \\times 2$ 对角线差分：</p>
+                        <p>$$G_x = \\begin{bmatrix} +1 & 0 \\\\ 0 & -1 \\end{bmatrix}, \\quad G_y = \\begin{bmatrix} 0 & +1 \\\\ -1 & 0 \\end{bmatrix}$$</p>
+                        <p><strong>Laplacian算子</strong>：二阶导数算子，对噪声非常敏感。</p>
+                        <p><strong>Canny边缘检测</strong>：最优边缘检测器，步骤：</p>
+                        <ol>
+                            <li>高斯平滑（降噪）</li>
+                            <li>计算梯度幅值和方向（Sobel）</li>
+                            <li>非极大值抑制（细化边缘）</li>
+                            <li>双阈值检测与滞后连接：$T_{high}$ 以上为强边缘，$T_{low}$ 以下被抑制，中间若与强边缘连通则保留</li>
+                        </ol>
+                    `
+                    },
+                    {
+                        id: "harris", title: "12.3 Harris角点检测",
+                        content: `
+                        <p>角点是图像中在两个方向上都存在显著灰度变化的点，是图像的局部特征。Harris检测器基于局部自相关矩阵：</p>
+                        <div class="formula-box">$$M = \\sum_{x,y} w(x,y) \\begin{bmatrix} I_x^2 & I_x I_y \\\\ I_x I_y & I_y^2 \\end{bmatrix}$$</div>
+                        <p>其中 $w$ 是高斯权重窗口，$I_x$、$I_y$ 是偏导数。角点响应函数：</p>
+                        <p>$$R = \\det(M) - k \\cdot (\\text{trace}(M))^2 = \\lambda_1\\lambda_2 - k(\\lambda_1+\\lambda_2)^2$$</p>
+                        <p>$k$ 通常取 $0.04 \\sim 0.06$。$R &gt; 0$ 且较大 → 角点；$|R|$ 小 → 平坦区域；$R &lt; 0$ → 边缘。</p>
+                    `
+                    },
+                    {
+                        id: "hough", title: "12.4 霍夫变换",
+                        content: `
+                        <p>霍夫变换是一种在参数空间中通过投票机制检测几何形状的技术。</p>
+                        <p><strong>霍夫线检测</strong>：直线在极坐标下表示为 $\\rho = x\\cos\\theta + y\\sin\\theta$。每个边缘点 $(x,y)$ 在 $(\\rho,\\theta)$ 参数空间中映射为一条正弦曲线。多条曲线的交点对应图像中的直线。</p>
+                        <p><strong>霍夫圆检测</strong>：圆的一般方程为 $(x-a)^2 + (y-b)^2 = r^2$，参数空间为 $(a,b,r)$ 三维。常使用梯度信息简化（霍夫梯度法）。</p>
+                    `
+                    },
+                    {
+                        id: "sift", title: "12.5 SIFT特征检测",
+                        content: `
+                        <p>SIFT（Scale-Invariant Feature Transform）具有尺度、旋转、光照不变性。四步流程：</p>
+                        <ol>
+                            <li><strong>尺度空间极值检测</strong>：构建高斯差分（DoG）金字塔，搜索尺度空间中的局部极值点作为候选关键点。</li>
+                            <li><strong>关键点精确定位</strong>：对DoG函数做泰勒展开，精确插值定位亚像素级关键点，剔除低对比度和边缘响应点。</li>
+                            <li><strong>方向分配</strong>：基于关键点邻域的梯度方向直方图，为每个关键点分配一个或多个主方向。</li>
+                            <li><strong>描述子生成</strong>：将关键点周围 $16 \\times 16$ 邻域分成 $4 \\times 4$ 子块，每块计算8方向梯度直方图，形成 $4 \\times 4 \\times 8 = 128$ 维特征向量。</li>
+                        </ol>
+                    `
+                    },
+                    {
+                        id: "hog", title: "12.6 HOG特征提取",
+                        content: `
+                        <p>HOG（Histogram of Oriented Gradients）通过统计局部区域的梯度方向直方图来描述物体外观。主要步骤：</p>
+                        <ol>
+                            <li>图像归一化（Gamma校正）</li>
+                            <li>计算梯度（水平+垂直）</li>
+                            <li>将图像划分为细胞单元（cell，如 $8 \\times 8$ 像素）</li>
+                            <li>每个cell统计梯度方向直方图（如9个bin，0°~180°）</li>
+                            <li>将相邻cell组成块（block，如 $2 \\times 2$ cells），块内做L2归一化</li>
+                            <li>所有block的直方图拼接为最终HOG特征向量</li>
+                        </ol>
+                        <p>HOG+SVM是经典的行人检测框架。</p>
+                    `
+                    }
+                ],
+                practices: ['template_matching', 'hough_lines', 'hough_circles', 'corner_harris', 'sift_features', 'hog_features']
+            }
+        };
+
+        // ========== 对比分组数据 ==========
+        const COMPARE_GROUPS = {
+            3: [
+                { id: 'compare_3_spatial', title: '空间滤波对比', desc: '均值滤波 vs 中值滤波 vs 高斯滤波 — 同时对比三种平滑滤波器的去噪效果与边缘保留能力', ops: ['mean_filter_restore', 'median_restore', 'gaussian_blur'], icon: 'filter' },
+            ],
+            4: [
+                { id: 'compare_4_lowpass', title: '低通滤波器对比', desc: '理想低通 vs 巴特沃斯低通 vs 高斯低通', ops: ['ideal_lowpass', 'butterworth_lowpass', 'gaussian_lowpass'], icon: 'lowpass' },
+                { id: 'compare_4_highpass', title: '高通滤波器对比', desc: '理想高通 vs 巴特沃斯高通 vs 高斯高通', ops: ['ideal_highpass', 'butterworth_highpass', 'gaussian_highpass'], icon: 'highpass' },
+            ],
+            5: [
+                { id: 'compare_5_noise', title: '噪声模型与复原对比', desc: '高斯噪声+均值滤波 vs 椒盐噪声+中值滤波 vs NLM vs 维纳滤波', ops: ['gaussian_noise', 'sp_noise', 'mean_filter_restore', 'median_restore', 'nlm_denoise', 'wiener_filter'], icon: 'noise' },
+            ],
+            6: [
+                { id: 'compare_6_color', title: '色彩空间转换对比', desc: 'RGB通道分离 vs HSV转换 vs 色调调整 vs 饱和度调整', ops: ['rgb_split', 'rgb_to_hsv', 'hue_adjust', 'saturation_adjust'], icon: 'color' },
+            ],
+            7: [
+                { id: 'compare_7_wavelet', title: '小波变换对比', desc: '高斯金字塔 vs 拉普拉斯金字塔 vs 多分辨率融合 vs DWT降噪', ops: ['gaussian_pyramid', 'laplacian_pyramid', 'pyramid_blend', 'dwt_denoise'], icon: 'wavelet' },
+            ],
+            8: [
+                { id: 'compare_8_compress', title: '压缩方法对比', desc: 'JPEG质量对比 vs RLE vs Huffman编码', ops: ['jpeg_compare', 'binary_rle', 'binary_huffman'], icon: 'compress' },
+            ],
+            9: [
+                { id: 'compare_9_morph', title: '形态学操作对比', desc: '膨胀 vs 腐蚀 vs 开运算 vs 闭运算 vs 形态学梯度', ops: ['erosion_dilation', 'open_close', 'morph_gradient', 'tophat', 'blackhat'], icon: 'morph' },
+            ],
+            10: [
+                { id: 'compare_10_seg', title: '分割方法对比', desc: 'Otsu阈值 vs 自适应阈值 vs K-means vs 区域生长 vs Mean Shift vs 分水岭 vs GrabCut', ops: ['otsu_threshold', 'adaptive_threshold', 'kmeans_segment', 'region_growing', 'mean_shift_segment', 'watershed', 'grabcut'], icon: 'seg' },
+            ],
+            11: [
+                { id: 'compare_11_contour', title: '轮廓与描述对比', desc: '轮廓提取 vs 凸包 vs 最小外接矩形 vs Hu矩 vs 傅里叶描述子', ops: ['contour_extract', 'convex_hull', 'min_enclosing', 'hu_moments', 'fourier_descriptor'], icon: 'contour' },
+            ],
+            12: [
+                { id: 'compare_12_edge', title: '边缘检测对比', desc: 'Sobel vs Prewitt vs Roberts vs Canny vs Laplacian', ops: ['sobel', 'prewitt', 'roberts', 'canny', 'laplacian'], icon: 'edge' },
+                { id: 'compare_12_detect', title: '特征检测对比', desc: '模板匹配 vs Harris vs SIFT vs HOG vs 霍夫变换', ops: ['template_matching', 'corner_harris', 'sift_features', 'hog_features', 'hough_lines'], icon: 'detect' },
+            ],
+        };
+
+        // ========== 教学目标数据库（对标工程教育认证） ==========
+        const LEARNING_OBJECTIVES = {
+            1: { knowledge: "理解数字图像的基本概念、图像感知模型、电磁波谱与图像获取方式；掌握图像采样、量化的数学原理及分辨率、比特深度的含义。", ability: "能够运用采样与量化理论分析数字图像的质量指标，选择合适的空间分辨率和灰度级以满足特定应用需求。", quality: "培养对图像质量的批判性思维和量化分析意识，建立从物理信号到数字图像的建模思维。", indicator: "1.3 掌握专业基础知识（信号与系统、数学）并能用于图像工程问题分析" },
+            2: { knowledge: "掌握数字图像的基本运算——算术/逻辑运算、空间几何变换（平移、旋转、缩放）及图像配准的数学基础。", ability: "能够使用几何变换矩阵实现图像校正与对齐，利用插值算法还原亚像素精度的几何变换。", quality: "培养空间想象力与坐标变换的数学抽象思维，理解仿射变换在图像预处理中的工程价值。", indicator: "2.2 能够运用数学方法建模并求解几何变换类工程问题" },
+            3: { knowledge: "掌握直方图分析（均衡化、匹配、CLAHE）和空间滤波（平滑、锐化、非线性）的原理、核函数设计与卷积运算机制。", ability: "能够根据实际图像质量问题（对比度低、噪声大、边缘模糊）选择合适的空间域增强算法并评估处理效果。", quality: "培养工程问题诊断能力——根据图像质量劣化特征反推所需的处理策略，建立参数调优的实验思维。", indicator: "3.2 能针对图像质量劣化问题设计/选择空间域处理方案并进行效果评估" },
+            4: { knowledge: "理解傅里叶变换在二维图像中的物理意义，掌握频域低通/高通/带通/带阻滤波器的设计与频率域滤波流程。", ability: "能够运用频域分析方法分离图像的周期噪声与结构性伪影，设计对应的频域滤波器并对比空间域方法。", quality: "培养从时域到频域的抽象转换思维，理解「频率」概念在图像处理中的直观对应（边缘=高频、平滑区域=低频）。", indicator: "4.1 能将傅里叶分析等数学工具应用于图像频域特征提取与处理" },
+            5: { knowledge: "掌握图像退化/复原模型，理解噪声统计特性（高斯、椒盐、瑞利等）及经典复原滤波器（逆滤波、维纳滤波、约束最小二乘）。", ability: "能够根据退化类型和噪声特性，选择合适的复原算法恢复图像质量，并定量评估复原效果（PSNR、SSIM）。", quality: "培养逆向工程思维——从模糊/噪声图像中识别退化模型并设计复原策略；强化定量评估意识。", indicator: "3.3 能够针对退化图像设计复原方案，并通过定量指标验证处理效果" },
+            6: { knowledge: "掌握彩色空间模型（RGB、HSV、Lab、CMYK）的数学定义及相互转换关系，理解伪彩色和全彩色图像处理技术。", ability: "能够利用不同颜色模型的特性完成彩色图像增强任务——如HSV空间饱和度调整、Lab空间颜色校正。", quality: "培养多维数据可视化思维，理解颜色空间选择对算法效果的关键影响。", indicator: "2.3 能够运用颜色科学知识解决彩色图像处理中的实际工程问题" },
+            7: { knowledge: "理解多分辨率处理的基本思想，掌握图像金字塔（高斯/拉普拉斯）、子带编码及小波变换（Haar、Daubechies）的基本理论。", ability: "能够利用金字塔分解实现多尺度图像融合与拼接，使用小波变换进行图像降噪与压缩。", quality: "培养层次化、多尺度的计算思维，理解「从粗到细」的分析策略在复杂图像处理任务中的优势。", indicator: "4.3 能运用多尺度分析方法解决图像融合、压缩等综合性工程问题" },
+            8: { knowledge: "掌握图像压缩的基本理论（信息熵、冗余类型），理解无损编码（哈夫曼、算术编码、LZW）和有损压缩（JPEG标准、变换编码）的原理。", ability: "能够分析图像冗余类型并选择合适的压缩策略，在压缩比与视觉质量之间取得平衡。", quality: "培养信息论思维——从数据冗余和率失真角度量化信息压缩的极限与代价。", indicator: "5.2 能运用信息论知识设计并评估图像压缩方案，平衡压缩效率与重建质量" },
+            9: { knowledge: "掌握二值形态学基本操作（膨胀、腐蚀、开闭运算、击中击不中变换）及灰度形态学、形态学重建的原理。", ability: "能够根据图像处理需求（去噪、边界提取、空洞填充、连通域分析）设计形态学操作序列。", quality: "培养结构化的「探针-击中」思维模式，理解形态学作为非线性图像处理工具在工业检测中的核心地位。", indicator: "3.2 能够利用形态学方法设计图像预处理与分析流程，解决工业视觉检测等实际问题" },
+            10: { knowledge: "掌握图像分割的主要方法——阈值法（Otsu、自适应）、基于边缘的分割、区域生长/分裂合并、聚类（K-means、Mean Shift）和GrabCut。", ability: "能够根据图像内容特征选择合适的分割算法，并对分割结果进行定量评估（Dice系数、IoU）。", quality: "培养「从整体到局部」的分解思维——将复杂场景分解为语义上有意义的区域；强化评估驱动的算法选择意识。", indicator: "3.2 能够针对不同应用场景（医学、遥感、工业）设计并优化图像分割方案" },
+            11: { knowledge: "掌握二值图像的表示方法（链码、多边形近似、标记图）和形状描述子（傅里叶描述子、Hu矩、统计矩）的数学定义与不变性质。", ability: "能够提取图像中的几何特征（面积、周长、紧凑度）和形状不变量，用于目标识别与分类。", quality: "培养从像素到语义的特征抽象能力，理解「不变性」在目标识别中的核心价值（旋转、平移、缩放不变性）。", indicator: "4.2 能够提取和分析图像目标的结构特征，并用于模式识别任务" },
+            12: { knowledge: "掌握边缘检测（Sobel、Canny、Laplacian）、角点检测（Harris、Shi-Tomasi）和特征描述子（SIFT、HOG）的原理及数学基础。", ability: "能够结合边缘检测和特征提取技术实现图像配准、目标检测和场景识别等高级视觉任务。", quality: "培养从底层特征到高层语义的递进推理能力，理解特征工程质量对深度学习模型性能的影响，激发对计算机视觉前沿的探索兴趣。", indicator: "5.1 能够综合运用图像特征提取与匹配技术解决目标检测与识别问题" },
+        };
+
+        // ========== 综合工程案例数据库 ==========
+        const ENGINEERING_CASES = {
+            1: { title: "卫星遥感图像分辨率选型分析", background: "某地理信息系统项目需要采购遥感卫星图像用于城市土地利用分类。供应商提供了不同空间分辨率（0.5m、2m、10m、30m）和不同量化位深（8bit、10bit、12bit、16bit）的影像产品。项目预算有限，需要在满足分类精度要求的前提下选择性价比最高的产品。", goal: "通过采样与量化实验，分析不同空间分辨率和灰度级对地物区分能力的影响，给出最优采购方案。", approach: "从预处理开始，对高分辨率参考图像依次执行降采样、低比特量化、对比分析，完整演示采样与量化对图像质量的影响。", operation: "case_01_satellite", expected: "输入：高分辨率航拍影像 → 一键执行完整流水线：降采样→2bit量化→4bit量化→四宫格对比。输出包含原始图、降采样图、2bit量化图、4bit量化图的拼接对比结果。推荐方案：2m分辨率+10bit量化。", sampleImg: "images/cases/satellite_remote.jpg", sampleLabel: "卫星遥感影像示意" },
+            2: { title: "扫描文档的几何校正与对齐", background: "某档案馆正在将大量历史纸质文档进行数字化扫描。由于纸张放置不齐、扫描仪走纸偏差以及文档本身存在折痕，扫描得到的图像存在旋转、倾斜和局部变形，导致后续OCR识别的准确率严重下降。", goal: "运用图像几何变换（旋转、仿射变换、透视变换）和插值算法，对扫描文档进行自动校正对齐。", approach: "从原始扫描文档出发，构建透视变换矩阵，分别使用最近邻和双三次插值执行校正，并排对比两种插值的校正质量差异。", operation: "case_02_document", expected: "输入：倾斜的扫描文档 → 一键执行：透视变换校正→最近邻vs双三次对比。预期双三次插值校正后文字边缘最清晰，OCR准确率从倾斜状态的72%提升至98%。", sampleImg: "images/cases/camera_calibration.jpg", sampleLabel: "工业相机标定图示意" },
+            3: { title: "工业零件表面缺陷检测——滤波降噪后边缘提取", background: "某汽车零部件制造厂在自动化产线上使用工业相机对金属铸件进行在线质量检测。车间环境存在振动和电磁干扰，导致采集的零件图像含有明显的随机噪声（高斯噪声为主）和偶发的脉冲噪声（椒盐噪声）。这些噪声会干扰后续的边缘检测和缺陷识别算法，导致误检率居高不下。", goal: "设计滤波预处理方案，在有效去除噪声的同时保留铸件表面微小裂纹的边缘细节，为后续缺陷分类提供干净输入。", approach: "对含噪零件图像依次执行中值滤波去噪、Sobel边缘检测、热力图叠加，完整演示从噪声抑制到缺陷标注的检测流水线。", operation: "case_03_defect", expected: "输入：含噪的金属零件图像 → 一键执行：中值滤波→Sobel边缘→热力图叠加。预期中值滤波对椒盐噪声最佳（PSNR>38dB），热力图清晰标注缺陷位置。", sampleImg: "images/cases/industrial_defect.jpg", sampleLabel: "工业零件表面缺陷示意" },
+            4: { title: "医学CT图像去噪——频域滤波对比研究", background: "某三甲医院放射科在低剂量CT扫描方案中，为了减少患者辐射暴露而降低X射线管电流，导致CT图像出现明显的量子噪声。这些噪声表现为图像中的高频颗粒状伪影，可能掩盖微小病灶（如早期肺结节、微钙化点），影响放射科医生的诊断准确率。", goal: "设计并比较不同频域低通滤波器（理想、巴特沃斯、高斯）对CT图像的去噪效果，找出在噪声抑制和病灶边缘保留之间的最优平衡。", approach: "对CT图像执行DFT变换到频域，应用高斯低通滤波器（D0=30），再IDFT回到空间域，完整演示频域滤波去噪全过程。", operation: "case_04_ct_denoise", expected: "输入：低剂量CT含噪图像 → 一键执行：DFT→高斯低通滤波→IDFT重建。预期高斯低通无振铃效应，在去噪和边缘保留之间取得良好平衡。", sampleImg: "images/cases/medical_ct.jpg", sampleLabel: "医学CT图像示意" },
+            5: { title: "老旧照片数字化修复——退化建模与图像复原", background: "某市档案馆启动了'城市记忆'项目，对一批拍摄于20世纪60-80年代的历史老照片进行数字化修复。这些照片普遍存在：因长期存放导致的霉斑和划痕（脉冲噪声）、银盐相纸老化产生的模糊（高斯退化）、以及因曝光或冲洗不当造成的整体偏暗/偏亮。需要在不引入伪影的前提下最大程度恢复原始影像质量。", goal: "建立照片的退化模型（模糊核估计+噪声类型识别），选择合适的复原算法，综合修复多种退化。", approach: "对扫描照片依次执行NLM去噪、USM锐化、CLAHE对比度增强，三步流水线协同恢复老照片的清晰度和细节。", operation: "case_05_photo_restore", expected: "输入：扫描的老照片（含多种退化）→ 一键执行：NLM去噪→USM锐化→CLAHE增强。预期处理后PSNR提升8-12dB，照片细节恢复显著。", sampleImg: "images/cases/old_photo_restoration.jpg", sampleLabel: "老旧照片修复示意" },
+            6: { title: "无人机航拍图像色彩增强与植被分析", background: "某农业科技公司使用多光谱无人机对大面积农田进行定期巡检，监测作物长势和病虫害情况。无人机在不同气象条件下（晴天、多云、黄昏）采集的RGB图像色温不一致，且整体饱和度偏低，导致基于颜色的植被指数（如ExG、GLI）计算不准确，影响了作物健康分类的可靠性。", goal: "在HSV颜色空间中统一调整图像的色调、饱和度和亮度，使不同光照条件下的航拍图像颜色一致，提升植被指数计算的准确性。", approach: "将航拍图像转换至HSV空间增强饱和度，再切换到LAB空间用CLAHE均衡亮度，两步协同增强植被区域的可区分度。", operation: "case_06_drone_veg", expected: "输入：不同光照的农田RGB图像 → 一键执行：HSV饱和度增强→LAB-CLAHE亮度均衡。预期HSV色彩增强后植被指数准确率从76%提升至91%。", sampleImg: "images/cases/agriculture_ndvi.jpg", sampleLabel: "农作物遥感图示意" },
+            7: { title: "全景图像拼接——多分辨率金字塔融合", background: "某旅游平台需要为用户上传的景点照片生成全景拼接图。用户从不同角度拍摄的多张照片之间存在曝光差异和几何形变，直接拼接会在接缝处产生明显的亮度和色差跳跃。需要使用多分辨率融合技术实现无缝拼接。", goal: "利用拉普拉斯金字塔将多张重叠图像在不同尺度上进行融合，消除拼接接缝，生成视觉无缝的全景图。", approach: "构建高斯金字塔进行多尺度分解，再构建拉普拉斯金字塔提取各层细节，在每一层对重叠区域进行加权融合后重建，实现无缝拼接。", operation: "case_07_panorama", expected: "输入：2-3张有重叠区域的照片 → 一键执行：高斯金字塔→拉普拉斯金字塔→多级融合重建。预期多分辨率融合可完全消除接缝处的亮度跳跃。", sampleImg: "images/cases/panorama_stitch.jpg", sampleLabel: "全景拼接素材示意" },
+            8: { title: "在线图片服务平台的压缩策略优化", background: "某社交平台每天接收上亿张用户上传图片，存储在云端CDN上。图片流量占平台总带宽的70%以上，存储和传输成本高昂。需要在保证用户可接受的视觉质量（无明显压缩伪影）前提下，最大化压缩比以降低运营成本。JPEG格式是主流选择，但需要确定最优的质量参数。", goal: "通过JPEG压缩实验，分析不同质量参数下的压缩比和视觉质量（PSNR）关系，找到成本与质量的最优平衡点。", approach: "对图像执行8×8分块DCT变换，使用标准量化表（Q=50）进行量化与反量化，IDCT重建并计算PSNR，完整演示JPEG压缩核心流程。", operation: "case_08_jpeg_opt", expected: "输入：高质量的原始照片 → 一键执行：分块DCT→量化→反量化→IDCT重建→PSNR评估。预期Q≈75为平台最优选择（压缩比约15:1，PSNR>35dB）。", sampleImg: "images/cases/document_scan.jpg", sampleLabel: "文档扫描件示意" },
+            9: { title: "PCB电路板缺陷自动化光学检测", background: "某电子制造企业在SMT贴片产线上使用AOI（自动光学检测）系统对PCB电路板进行质量检测。检测需求包括：焊盘是否缺失、走线是否存在短路/断路、元器件是否偏移。原始图像存在细小噪声点和走线边缘毛刺，需要在保留真实缺陷特征的前提下清除伪缺陷。", goal: "利用形态学操作（开运算去除噪声、形态学梯度突出边界）构建完整的缺陷检测流程。", approach: "对PCB图像依次执行灰度化、Otsu二值化、开运算去噪、形态学梯度边缘检测，完整演示从预处理到缺陷定位的形态学流水线。", operation: "case_09_pcb_inspect", expected: "输入：PCB电路板图像 → 一键执行：灰度→Otsu→开运算→形态学梯度。预期开运算可消除直径<3像素的噪声点，形态学梯度清晰标注缺陷边界。缺陷检出率从78%提升至96%。", sampleImg: "images/cases/pcb_circuit.jpg", sampleLabel: "PCB电路板示意" },
+            10: { title: "遥感图像水体提取——多方法分割对比", background: "某水利部门需要利用Landsat卫星遥感图像对省内湖泊、水库和河流进行年度水体面积变化监测。遥感图像中存在云层遮挡、山体阴影、植被覆盖水体边界等问题，需要一套完整的图像分割流水线准确提取水体区域。", goal: "综合运用Otsu阈值分割和形态学后处理，对遥感图像进行水体区域提取，并在复杂地物环境下获得干净的水体mask。", approach: "对遥感图像执行灰度化、Otsu自动阈值二值化、闭运算填充水体空洞、开运算去除孤立噪点，完整演示遥感水体提取流水线。", operation: "case_10_water_extract", expected: "输入：Landsat卫星遥感图像 → 一键执行：灰度→Otsu→闭运算→开运算。预期Otsu对开阔水面效果最好，闭运算有效填充水体内部空洞，开运算清除噪点后水体mask干净完整。", sampleImg: "images/cases/cell_microscope.jpg", sampleLabel: "细胞显微镜图示意" },
+            11: { title: "机械零件自动分类——基于形状特征的目标识别", background: "某智能制造工厂的自动化分拣线上，传送带上的金属零件（螺栓、螺母、垫圈、齿轮）需要被机器人视觉系统实时识别并分类抓取至对应的料箱。零件在传送带上随机旋转摆放，且因光照变化存在阴影干扰。", goal: "提取零件的轮廓特征，计算形状描述子（面积、周长、Hu矩、圆形度、逼近顶点数），实现旋转不变的零件自动分类。", approach: "对零件图像执行灰度化、Otsu二值化、轮廓提取，计算每个轮廓的Hu矩和几何特征（面积/周长/圆形度/顶点数），综合判断零件类型并标注。", operation: "case_11_part_classify", expected: "输入：传送带上的混合零件图像 → 一键执行：灰度→Otsu→轮廓提取→Hu矩+几何特征→分类标注。预期Hu矩提供旋转/缩放不变性，分类准确率达99.5%。", sampleImg: "images/cases/mechanical_parts.jpg", sampleLabel: "机械零件轮廓示意" },
+            12: { title: "自动驾驶交通标志检测——边缘+特征级联识别", background: "某自动驾驶团队开发车载视觉感知系统，需要在复杂道路场景中实时检测并识别交通标志（限速牌、停止牌、转向指示等）。场景挑战包括：光照剧烈变化（进出隧道）、部分遮挡（树枝、车辆）、尺度变化（远近不一）。", goal: "设计边缘检测+角点检测+霍夫圆检测的级联流程，实现高鲁棒性、高召回率的交通标志检测与识别。", approach: "对道路场景图像执行灰度化、Canny边缘检测（双阈值50/150）、霍夫圆检测定位圆形标志牌、Harris角点辅助定位，三者协同确保检测鲁棒性。", operation: "case_12_traffic_sign", expected: "输入：行车记录仪道路场景图像 → 一键执行：灰度→Canny边缘→霍夫圆检测→Harris角点→标注。预期Canny+Hough+Harris级联方案召回率达93%、精确率达95%。", sampleImg: "images/cases/traffic_scene.jpg", sampleLabel: "交通场景图示意" },
+        };
+
+        const OP_NAMES = {
+            'mean_filter_restore': '均值滤波去噪', 'median_restore': '中值滤波去噪', 'gaussian_blur': '高斯滤波',
+            'ideal_lowpass': '理想低通', 'butterworth_lowpass': '巴特沃斯低通', 'gaussian_lowpass': '高斯低通',
+            'ideal_highpass': '理想高通', 'butterworth_highpass': '巴特沃斯高通', 'gaussian_highpass': '高斯高通',
+            'gaussian_noise': '高斯噪声', 'sp_noise': '椒盐噪声', 'nlm_denoise': 'NLM去噪', 'wiener_filter': '维纳滤波',
+            'rgb_split': 'RGB分离', 'rgb_to_hsv': 'HSV转换', 'hue_adjust': '色调调整', 'saturation_adjust': '饱和度调整',
+            'gaussian_pyramid': '高斯金字塔', 'laplacian_pyramid': '拉普拉斯金字塔', 'pyramid_blend': '多分辨率融合', 'dwt_denoise': 'DWT降噪',
+            'jpeg_compare': 'JPEG压缩', 'binary_rle': '游程编码', 'binary_huffman': '哈夫曼编码',
+            'erosion_dilation': '腐蚀/膨胀', 'open_close': '开/闭运算', 'morph_gradient': '形态学梯度', 'tophat': '顶帽变换', 'blackhat': '黑帽变换',
+            'otsu_threshold': 'Otsu阈值', 'adaptive_threshold': '自适应阈值', 'kmeans_segment': 'K-means', 'mean_shift_segment': 'Mean Shift', 'watershed': '分水岭', 'grabcut': 'GrabCut',
+            'contour_extract': '轮廓提取', 'convex_hull': '凸包', 'min_enclosing': '最小外接矩形', 'hu_moments': 'Hu矩', 'fourier_descriptor': '傅里叶描述子',
+            'sobel': 'Sobel', 'canny': 'Canny', 'laplacian': 'Laplacian',
+            'template_matching': '模板匹配', 'corner_harris': 'Harris', 'sift_features': 'SIFT', 'hog_features': 'HOG', 'hough_lines': '霍夫线检测',
+            'prewitt': 'Prewitt', 'roberts': 'Roberts', 'region_growing': '区域生长',
+            'case_01_satellite': '遥感图像采样分析', 'case_02_document': '文档几何校正',
+            'case_03_defect': '零件缺陷检测', 'case_04_ct_denoise': 'CT图像去噪',
+            'case_05_photo_restore': '老照片复原', 'case_06_drone_veg': '航拍植被增强',
+            'case_07_panorama': '多分辨率融合', 'case_08_jpeg_opt': 'JPEG压缩优化',
+            'case_09_pcb_inspect': 'PCB缺陷检测', 'case_10_water_extract': '遥感水体提取',
+            'case_11_part_classify': '零件分类识别', 'case_12_traffic_sign': '交通标志检测',
+        };
+
+        // ========== 小节到单个实操的映射 ==========
+        const SECTION_TO_SINGLE_OP = {
+            // Ch1/2
+            'intro': { op: 'sampling_demo', label: '采样过程演示' },
+            'origin': { op: 'quantization_demo', label: '量化过程演示' },
+            'fields': { op: 'resolution_compare', label: '空间分辨率对比' },
+            'steps': { op: 'interpolation_demo', label: '图像插值对比' },
+            'vision': { op: 'distance_metrics', label: '距离度量演示' },
+            'imaging': { op: 'pixel_neighbors', label: '像素邻域可视化' },
+            'sampling': { op: 'sampling_demo', label: '采样过程演示' },
+            'neighbors': { op: 'pixel_neighbors', label: '像素邻域可视化' },
+            'adjacency': { op: 'distance_metrics', label: '距离度量演示' },
+            'distance': { op: 'distance_metrics', label: '距离度量演示' },
+            'operations': { op: 'resolution_compare', label: '空间分辨率对比' },
+            'interpolation': { op: 'interpolation_demo', label: '图像插值对比' },
+            // Ch3
+            'background': { op: 'image_inversion', label: '图像反转' },
+            'basic_transform': { op: 'gamma_correction', label: '伽马校正' },
+            'histogram': { op: 'histogram_equalization', label: '直方图均衡化' },
+            'spatial_filter': { op: 'median_blur', label: '中值滤波' },
+            'smoothing': { op: 'gaussian_blur', label: '高斯滤波' },
+            'sharpening': { op: 'laplacian', label: '拉普拉斯锐化' },
+            // Ch4
+            'fourier': { op: 'ideal_lowpass', label: '理想低通滤波' },
+            'conv_theorem': { op: 'butterworth_lowpass', label: '巴特沃斯低通滤波' },
+            'lowpass': { op: 'gaussian_lowpass', label: '高斯低通滤波' },
+            'highpass': { op: 'gaussian_highpass', label: '高斯高通滤波' },
+            'band': { op: 'bandpass_filter', label: '带通滤波' },
+            // Ch5
+            'degradation': { op: 'gaussian_noise', label: '添加高斯噪声' },
+            'noise_models': { op: 'sp_noise', label: '添加椒盐噪声' },
+            'restoration': { op: 'median_restore', label: '中值滤波去噪' },
+            'wiener': { op: 'wiener_filter', label: '维纳滤波复原' },
+            // Ch6
+            'color_fundamentals': { op: 'rgb_split', label: 'RGB通道分离' },
+            'color_models': { op: 'rgb_to_hsv', label: 'RGB→HSV转换' },
+            'pseudocolor': { op: 'pseudo_color', label: '假彩色增强' },
+            'color_enhancement': { op: 'color_hist_eq', label: '彩色直方图均衡化' },
+            // Ch7
+            'pyramid': { op: 'gaussian_pyramid', label: '高斯金字塔' },
+            'wavelet_intro': { op: 'laplacian_pyramid', label: '拉普拉斯金字塔' },
+            'dwt_impl': { op: 'pyramid_blend', label: '多分辨率融合' },
+            'dwt_app': { op: 'dwt_denoise', label: '离散小波降噪' },
+            // Ch8
+            'compression_basics': { op: 'dct_visualize', label: 'DCT变换可视化' },
+            'huffman': { op: 'binary_huffman', label: '哈夫曼编码模拟' },
+            'rle': { op: 'binary_rle', label: '二值化与游程编码' },
+            'jpeg': { op: 'jpeg_simulate', label: 'JPEG压缩模拟' },
+            // Ch9
+            'morph_intro': { op: 'erosion_dilation', label: '腐蚀与膨胀' },
+            'erosion_dilation': { op: 'open_close', label: '开运算与闭运算' },
+            'open_close': { op: 'morph_gradient', label: '形态学梯度' },
+            'morph_gradient': { op: 'tophat', label: '顶帽变换' },
+            'skeleton': { op: 'skeletonize', label: '骨架提取' },
+            // Ch10
+            'seg_intro': { op: 'otsu_threshold', label: 'Otsu阈值分割' },
+            'threshold': { op: 'adaptive_threshold', label: '自适应阈值分割' },
+            'region': { op: 'kmeans_segment', label: 'K-means聚类分割' },
+            'watershed': { op: 'watershed', label: '分水岭算法' },
+            'grabcut': { op: 'grabcut', label: 'GrabCut分割' },
+            // Ch11
+            'rep_intro': { op: 'contour_extract', label: '轮廓提取' },
+            'boundary': { op: 'fourier_descriptor', label: '傅里叶描述子' },
+            'moments': { op: 'hu_moments', label: 'Hu矩特征' },
+            'contour': { op: 'contour_approx', label: '轮廓近似' },
+            // Ch12
+            'template': { op: 'template_matching', label: '模板匹配' },
+            'edge_detection': { op: 'canny', label: 'Canny边缘检测' },
+            'harris': { op: 'corner_harris', label: 'Harris角点检测' },
+            'hough': { op: 'hough_lines', label: '霍夫线检测' },
+            'sift': { op: 'sift_features', label: 'SIFT特征检测' },
+            'hog': { op: 'hog_features', label: 'HOG特征提取' },
+        };
+
+        // ========== 渲染 ==========
+        function buildTOC(sections, groups, chapterId) {
+            let html = '';
+            sections.forEach((s, i) => {
+                html += `<li><a href="#section-${s.id}">${s.title}</a></li>`;
+            });
+            // 跨学科案例（仅3、6、10、12章有）
+            if (CROSS_DISC_CASES[chapterId]) {
+                html += `<li class="toc-separator">──</li>`;
+                html += `<li class="toc-cross"><a href="#section-cross"><strong>跨学科案例</strong></a></li>`;
+            }
+            if (groups && groups.length > 0) {
+                html += `<li class="toc-separator">──</li>`;
+                html += `<li class="toc-compare-main"><a href="#section-compare"><strong>本章综合对比分析</strong></a></li>`;
+                groups.forEach(g => {
+                    html += `<li class="toc-compare"><a href="#compare-${g.id}">${g.title}</a></li>`;
+                });
+            }
+            // 综合工程案例（所有12章）
+            if (ENGINEERING_CASES[chapterId]) {
+                html += `<li class="toc-separator">──</li>`;
+                html += `<li class="toc-cross"><a href="#section-case"><strong>综合工程案例</strong></a></li>`;
+            }
+            document.getElementById('tocList').innerHTML = html;
+        }
+
+        function buildContent(sections, groups, chapterId) {
+            let html = '';
+            sections.forEach(s => {
+                html += `<article class="theory-section" id="section-${s.id}">`;
+                html += `<h2 class="section-heading">${s.title}</h2>`;
+                html += `<div class="section-body">${s.content}</div>`;
+                // 单节实操按钮
+                const sop = SECTION_TO_SINGLE_OP[s.id];
+                if (sop) {
+                    html += `<div class="section-practice"><a href="/operation?chapter=${chapterId}&operation=${sop.op}" class="practice-btn"><span class="practice-icon">&#128736;</span> 实操：${sop.label} &rarr;</a></div>`;
+                }
+                html += `</article>`;
+            });
+
+            if (groups && groups.length > 0) {
+                html += `<article class="theory-section" id="section-compare"><h2 class="section-heading">本章综合对比分析</h2><p style="color:var(--text-light);margin-bottom:1rem;">以下为本节所有算法的对比实操，选择一组进行实时对比分析，多算法并排展示，各有独立参数面板。</p></article>`;
+                html += `<div class="compare-grid">`;
+                groups.forEach(g => {
+                    const opLabels = g.ops.map(id => `<span class="op-tag">${OP_NAMES[id] || id}</span>`).join(' ');
+                    html += `
+                <a href="/compare?group=${g.id}&chapter=${chapterId}" class="compare-card" id="compare-${g.id}">
+                    <div class="compare-card-icon">${getIcon(g.icon)}</div>
+                    <h3>${g.title}</h3>
+                    <p>${g.desc}</p>
+                    <div class="compare-card-ops">${opLabels}</div>
+                    <span class="compare-card-btn">进入对比模式 &rarr;</span>
+                </a>`;
+                });
+                html += `</div>`;
+            }
+            document.getElementById('theoryContent').innerHTML = html;
+
+            // 插入跨学科案例（在综合对比分析之前）
+            renderCrossDisCases(chapterId);
+
+            // 追加综合工程案例（在综合对比分析之后）
+            var caseHtml = renderEngineeringCase(chapterId);
+            if (caseHtml) {
+                document.getElementById('theoryContent').innerHTML += caseHtml;
+            }
+        }
+
+        function getIcon(name) {
+            const icons = {
+                filter: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>',
+                lowpass: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>',
+                highpass: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>',
+                noise: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="12" y1="7" x2="12.01" y2="7"/><line x1="17" y1="7" x2="17.01" y2="7"/></svg>',
+                color: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="9" r="3" fill="#ef4444"/><circle cx="15" cy="9" r="3" fill="#22c55e"/><circle cx="12" cy="15" r="3" fill="#3b82f6"/></svg>',
+                wavelet: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l3-6 3 12 3-12 3 6 3-12 3 12"/></svg>',
+                compress: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="16" y1="6" x2="16" y2="18"/></svg>',
+                morph: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><circle cx="7.5" cy="16.5" r="3.5"/><circle cx="16.5" cy="16.5" r="3.5"/></svg>',
+                seg: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l16 16M20 4L4 20"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="3"/></svg>',
+                contour: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l3 2 2-3 3 4 4-2 2 3"/></svg>',
+                edge: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="20" x2="12" y2="4"/><line x1="12" y1="4" x2="20" y2="20"/></svg>',
+                detect: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>',
+            };
+            return icons[name] || icons.filter;
+        }
+
+        // ========== 跨学科案例数据库 ==========
+        const CROSS_DISC_CASES = {
+            3: {
+                title: '跨学科案例：医学图像降噪',
+                background: '在放射科，CT和X光图像常因设备噪声、患者移动等因素产生伪影。过度的噪声会掩盖微小病变（如早期肺结节），导致漏诊。空间滤波是医学影像预处理的核心步骤。',
+                tech: '中值滤波可有效去除脉冲噪声但保留边缘——这对病灶边界至关重要；高斯滤波适合处理高斯噪声但会使边缘模糊；双边滤波在去噪同时保持边缘，但计算量较大。',
+                sampleImg: 'images/cases/medical_ct.jpg',
+                sampleLabel: '医学CT去噪对比示意',
+                operation: 'median_blur',
+                opLabel: '中值滤波去噪'
+            },
+            6: {
+                title: '跨学科案例：农业遥感 — 作物健康检测',
+                background: '精准农业依赖遥感影像分析作物健康状况。健康植被在近红外波段反射率高、红光波段吸收强，通过计算归一化差异植被指数NDVI可量化植被健康程度。伪彩色处理将NDVI映射为直观的颜色——绿色表示健康，黄色表示亚健康，红色表示不健康。',
+                tech: '利用彩色图像处理的通道运算：NDVI = (NIR - Red) / (NIR + Red)，将灰度NDVI图通过伪彩色映射转为直观的彩色图像，辅助农业专家快速决策。',
+                sampleImg: 'images/cases/agriculture_ndvi.jpg',
+                sampleLabel: 'NDVI伪彩色映射示意',
+                operation: 'pseudo_color',
+                opLabel: '伪彩色处理'
+            },
+            10: {
+                title: '跨学科案例：自动驾驶 — 车道线检测',
+                background: '自动驾驶汽车需要实时识别道路车道线以保持行驶安全。车道线检测是自动驾驶感知模块的基础任务，涉及图像分割、边缘检测和几何拟合等技术。',
+                tech: '流程：①高斯滤波降噪 → ②Canny边缘检测 → ③ROI区域提取 → ④霍夫变换检测直线 → ⑤拟合车道线。其中图像分割（Canny阈值选择）直接影响后续检测精度。',
+                sampleImg: 'images/cases/autonomous_lane.jpg',
+                sampleLabel: '车道线检测结果示意',
+                operation: 'canny',
+                opLabel: 'Canny边缘检测'
+            },
+            12: {
+                title: '跨学科案例：智慧交通 — 车牌识别',
+                background: '车牌识别系统（LPR）广泛应用于停车场管理、高速收费和交通违章抓拍。系统需要从复杂背景中准确定位车牌区域，再逐个识别字符，涉及目标定位、字符分割和模式识别三个关键环节。',
+                tech: '流程：①灰度化+直方图均衡化增强对比度 → ②Sobel边缘检测定位车牌 → ③形态学处理确定ROI → ④字符分割 → ⑤SIFT/HOG特征提取 → ⑥分类器识别。本章重点在特征提取与分类。',
+                sampleImg: 'images/cases/traffic_license.jpg',
+                sampleLabel: '车牌识别系统示意',
+                operation: 'template_matching',
+                opLabel: '模板匹配'
+            }
+        };
+
+        function renderCrossDisCases(chapterId) {
+            var cs = CROSS_DISC_CASES[chapterId];
+            if (!cs) return;
+            var container = document.getElementById('theoryContent');
+            var html = '<article class="theory-section cross-disc-section" id="section-cross">';
+            html += '<h2 class="section-heading" style="display:flex;align-items:center;gap:0.5rem;">';
+            html += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>';
+            html += cs.title + '</h2>';
+            html += '<div class="cross-disc-card">';
+
+            // 场景背景
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 场景背景</h4><p>' + escHtml(cs.background) + '</p></div>';
+
+            // 技术原理
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> 技术原理与本章关联</h4><p>' + escHtml(cs.tech) + '</p></div>';
+
+            // 示例图片
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> ' + escHtml(cs.sampleLabel) + '</h4>';
+            html += '<div class="case-sample-image"><img src="/' + escHtml(cs.sampleImg) + '" alt="' + escHtml(cs.sampleLabel) + '" class="case-thumb" onclick="openLightbox(this.src, this.alt)" loading="lazy" onerror="this.style.display=\'none\'"/></div></div>';
+
+            // 实操入口
+            if (cs.operation) {
+                html += '<div class="case-practices"><a href="/operation?chapter=' + chapterId + '&operation=' + cs.operation + '" class="case-practice-btn case-practice-main"><span></span> 跨学科实操：' + escHtml(cs.opLabel) + ' &rarr;</a></div>';
+            }
+            html += '</div></article>';
+
+            // 插入到综合对比分析之前（若没有对比分析则插入到综合工程案例之前）
+            var target = container.querySelector('#section-compare') || container.querySelector('#section-case');
+            if (target) {
+                target.insertAdjacentHTML('beforebegin', html);
+            } else {
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+        const LO_ICONS = {
+            knowledge: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+            ability: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+            quality: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+            indicator: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        };
+        const LO_LABELS = { knowledge: '知识目标', ability: '能力目标', quality: '素养目标', indicator: '对应毕业要求' };
+        function renderLearningObjectives(chapterId) {
+            const obj = LEARNING_OBJECTIVES[chapterId];
+            if (!obj) return;
+            const keys = ['knowledge', 'ability', 'quality', 'indicator'];
+            let html = '';
+            keys.forEach(k => {
+                html += '<div class="lo-item lo-' + k + '">';
+                html += '<div class="lo-item-icon">' + LO_ICONS[k] + '</div>';
+                html += '<div class="lo-item-content">';
+                html += '<span class="lo-item-label">' + LO_LABELS[k] + '</span>';
+                html += '<p class="lo-item-text">' + escHtml(obj[k]) + '</p>';
+                html += '</div></div>';
+            });
+            document.getElementById('loGrid').innerHTML = html;
+        }
+
+        // ========== 渲染综合工程案例 ==========
+        function renderEngineeringCase(chapterId) {
+            const cs = ENGINEERING_CASES[chapterId];
+            if (!cs) return '';
+            let html = '<article class="case-study" id="section-case">';
+            html += '<h2 class="section-heading" style="display:flex;align-items:center;gap:0.5rem;">';
+            html += '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
+            html += '综合工程案例</h2>';
+            html += '<div class="case-study-card"><h3 class="case-title">' + escHtml(cs.title) + '</h3>';
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 案例背景</h4><p>' + escHtml(cs.background) + '</p></div>';
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg> 案例目标</h4><p>' + escHtml(cs.goal) + '</p></div>';
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> 解决思路</h4><p>' + escHtml(cs.approach) + '</p></div>';
+            html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> 预期输入/输出</h4><p>' + escHtml(cs.expected) + '</p></div>';
+            if (cs.sampleImg) {
+                html += '<div class="case-block"><h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> ' + escHtml(cs.sampleLabel || '配套素材') + '</h4>';
+                html += '<div class="case-sample-image"><img src="/' + escHtml(cs.sampleImg) + '" alt="' + escHtml(cs.sampleLabel || '案例示例图片') + '" class="case-thumb" onclick="openLightbox(this.src, this.alt)" loading="lazy" onerror="this.style.display=\'none\'"/></div></div>';
+            }
+            html += '<div class="case-practices">';
+            if (cs.operation) {
+                const opName = OP_NAMES[cs.operation] || cs.operation;
+                html += '<a href="/operation?chapter=' + chapterId + '&operation=' + cs.operation + '" class="case-practice-btn case-practice-main"><span>&#128736;</span> 综合工程案例实操：' + escHtml(opName) + ' &rarr;</a>';
+            }
+            html += '</div></div></article>';
+            return html;
+        }
+
+        function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        // 初始化
+        const data = THEORY_DATA[CHAPTER_ID];
+        if (data) {
+            const groups = COMPARE_GROUPS[CHAPTER_ID] || [];
+            buildTOC(data.sections, groups, CHAPTER_ID);
+            buildContent(data.sections, groups, CHAPTER_ID);
+            renderLearningObjectives(CHAPTER_ID);
+            document.title = data.title + ' - 数字图像处理教学平台';
+        }
+
+        // PPT下载按钮映射
+        const PPT_FILES = {
+            1:  '【ch01】绪论.pptx',
+            2:  '【ch02】数字图像基础.pptx',
+            3:  '【ch03】灰度变换与空间滤波.pptx',
+            4:  '【ch04】频率域滤波.pptx',
+            5:  '【ch05】图像复原与重建.pptx',
+            6:  '【ch06】彩色图像处理.pptx',
+            7:  '【ch07】小波变换和其他图像变换.pptx',
+            8:  '【ch08】图像压缩和水印.pptx',
+            9:  '【ch09】形态学图像处理.pptx',
+            10: '【ch10】图像分割.pptx',
+            11: '【ch11】特征提取.pptx',
+            12: '【ch12】 图像模式分类.pptx'
+        };
+        (function() {
+            var fname = PPT_FILES[CHAPTER_ID];
+            var btn = document.getElementById('pptDownloadBtn');
+            if (fname && btn) {
+                btn.href = '/download/ppt/' + encodeURIComponent(fname);
+                btn.download = fname;
+            } else if (btn) {
+                btn.style.display = 'none';
+            }
+        })();
+
+        // 滚动到顶部按钮
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', () => {
+            scrollBtn.style.display = window.scrollY > 500 ? 'flex' : 'none';
+
+            // TOC 高亮当前阅读的节
+            const sections = document.querySelectorAll('.theory-section[id]');
+            const tocLinks = document.querySelectorAll('#tocList a');
+            let currentId = '';
+            sections.forEach(sec => {
+                const top = sec.getBoundingClientRect().top;
+                if (top < 150) currentId = sec.id;
+            });
+            tocLinks.forEach(link => {
+                link.classList.remove('toc-active');
+                if (link.getAttribute('href') === '#' + currentId) {
+                    link.classList.add('toc-active');
+                }
+            });
+        });
+        scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // KaTeX 渲染
+        document.addEventListener("DOMContentLoaded", function () {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false },
+                    { left: "\\[", right: "\\]", display: true },
+                ],
+                throwOnError: false
+            });
+        });
+
+        // 图片点击放大 Lightbox
+        function openLightbox(src, alt) {
+            var overlay = document.getElementById('lightbox-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'lightbox-overlay';
+                overlay.className = 'lightbox-overlay';
+                overlay.innerHTML = '<span class="lightbox-close" onclick="closeLightbox()">&times;</span><img class="lightbox-img" id="lightbox-img" alt="">';
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay || e.target.className === 'lightbox-close') closeLightbox();
+                });
+                document.body.appendChild(overlay);
+            }
+            var img = document.getElementById('lightbox-img');
+            img.src = src;
+            img.alt = alt || '';
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeLightbox() {
+            var overlay = document.getElementById('lightbox-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox();
+        });
+    </script>
+{% if current_user %}
+<!-- ========== 章节讨论区 ========== -->
+<div class="discuss-fab" id="discussFab" title="讨论区">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+</div>
+
+<div class="discuss-panel" id="discussPanel">
+    <div class="discuss-header">
+        <h3>章节讨论区</h3>
+        <button class="discuss-close" onclick="toggleDiscuss()">&times;</button>
+    </div>
+    <div class="discuss-body" id="discussBody">
+        <div class="discuss-input-row">
+            <textarea id="discussInput" placeholder="写下你的想法..." rows="2"></textarea>
+            <button class="btn-primary" id="discussSubmitBtn" onclick="submitComment()">发送</button>
+        </div>
+        <div class="discuss-list" id="discussList">
+            <p style="color:#7a8bb5;text-align:center;padding:20px;">加载中...</p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 讨论区悬浮按钮 */
+.discuss-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 80px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(102,126,234,0.4);
+    z-index: 999;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.discuss-fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 22px rgba(102,126,234,0.55);
+}
+
+/* 讨论区面板 */
+.discuss-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 42vh;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    transform: translateY(100%);
+}
+.discuss-panel.open {
+    display: flex;
+    transform: translateY(0);
+}
+.discuss-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+.discuss-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1a1a2e;
+}
+.discuss-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+}
+.discuss-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 20px;
+}
+.discuss-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+.discuss-input-row textarea {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: none;
+    font-family: inherit;
+}
+.discuss-input-row textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.discuss-input-row .btn-primary {
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding: 8px 16px;
+    background: #667eea;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.discuss-input-row .btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* 评论卡片 */
+.discuss-card {
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.discuss-card:last-child {
+    border-bottom: none;
+}
+.discuss-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.discuss-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a8c0ff, #3f2b96);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.discuss-card-body {
+    flex: 1;
+    min-width: 0;
+}
+.discuss-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.discuss-card-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+.discuss-card-time {
+    font-size: 12px;
+    color: #aaa;
+}
+.discuss-card-content {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.6;
+    word-break: break-word;
+}
+.discuss-card-content.deleted {
+    color: #bbb;
+    font-style: italic;
+}
+.discuss-card-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 12px;
+}
+.discuss-card-actions button {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+}
+.discuss-card-actions button:hover {
+    color: #667eea;
+}
+.discuss-card-actions button.del-btn:hover {
+    color: #ff6b6b;
+}
+
+/* 回复区 */
+.discuss-replies {
+    margin-top: 8px;
+    padding-left: 46px;
+}
+.discuss-reply {
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f8f8;
+}
+.discuss-reply:last-child {
+    border-bottom: none;
+}
+.discuss-reply-inline {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+}
+.discuss-reply-inline textarea {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    resize: none;
+    font-family: inherit;
+    rows: 2;
+}
+.discuss-reply-inline textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+.discuss-reply-inline .btn-primary {
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+.discuss-reply-inline .cancel-reply {
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding: 6px 12px;
+    font-size: 13px;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #666;
+}
+</style>
+
+<script>
+// CHAPTER_ID 已在第76行声明，此处复用
+const CURRENT_USER_ID = {{ current_user.id }};
+const IS_ADMIN = {{ 'true' if current_user.role == 'admin' else 'false' }};
+
+let replyTargetId = null;
+
+function toggleDiscuss() {
+    const panel = document.getElementById('discussPanel');
+    if (panel.classList.contains('open')) {
+        panel.classList.remove('open');
+    } else {
+        panel.classList.add('open');
+        loadComments();
+    }
+}
+
+document.getElementById('discussFab').addEventListener('click', toggleDiscuss);
+
+async function loadComments() {
+    const list = document.getElementById('discussList');
+    try {
+        const resp = await fetch('/auth/api/comments/' + CHAPTER_ID);
+        const data = await resp.json();
+        if (data.status !== 'success') { list.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">加载失败</p>'; return; }
+        if (!data.comments.length) {
+            list.innerHTML = '<p style="color:#7a8bb5;text-align:center;padding:20px;">暂无讨论，来说点什么吧</p>';
+            return;
+        }
+        list.innerHTML = data.comments.map(c => renderComment(c, 0)).join('');
+    } catch(e) {
+        list.innerHTML = '<p style="color:#999;text-align:center;padding:20px;">加载失败</p>';
+    }
+}
+
+function renderComment(c, level) {
+    const avatar = (c.user_name || '?')[0];
+    const isDeleted = c.is_deleted;
+    const canDel = c.can_delete && !isDeleted;
+
+    let contentHtml = '';
+    if (isDeleted) {
+        contentHtml = `<div class="discuss-card-content deleted">该评论已被删除</div>`;
+    } else {
+        contentHtml = `
+            <div class="discuss-card-content">${escapeHtml(c.content)}</div>
+            <div class="discuss-card-actions">
+                <button onclick="startReply(${c.id})">回复</button>
+                ${canDel ? `<button class="del-btn" onclick="doDelete(${c.id})">删除</button>` : ''}
+            </div>
+        `;
+    }
+
+    let repliesHtml = '';
+    if (c.replies && c.replies.length) {
+        repliesHtml = '<div class="discuss-replies">' + c.replies.map(r => renderReply(r)).join('') + '</div>';
+    }
+
+    return `
+        <div class="discuss-card" id="comment-${c.id}">
+            <div class="discuss-card-top">
+                <div class="discuss-avatar">${avatar}</div>
+                <div class="discuss-card-body">
+                    <div class="discuss-card-meta">
+                        <span class="discuss-card-name">${escapeHtml(c.user_name)}</span>
+                        <span class="discuss-card-time">${formatTime(c.created_at)}</span>
+                    </div>
+                    ${contentHtml}
+                    <div class="discuss-reply-box" id="replyBox-${c.id}"></div>
+                </div>
+            </div>
+            ${repliesHtml}
+        </div>`;
+}
+
+function renderReply(r) {
+    const avatar = (r.user_name || '?')[0];
+    const isDeleted = r.is_deleted;
+    const canDel = r.can_delete && !isDeleted;
+
+    if (isDeleted) {
+        return `<div class="discuss-reply">
+            <div class="discuss-card-top">
+                <div class="discuss-avatar" style="width:28px;height:28px;font-size:12px;">?</div>
+                <div class="discuss-card-body">
+                    <div class="discuss-card-content deleted">该评论已被删除</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    return `<div class="discuss-reply" id="comment-${r.id}">
+        <div class="discuss-card-top">
+            <div class="discuss-avatar" style="width:28px;height:28px;font-size:12px;">${avatar}</div>
+            <div class="discuss-card-body">
+                <div class="discuss-card-meta">
+                    <span class="discuss-card-name" style="font-size:13px;">${escapeHtml(r.user_name)}</span>
+                    <span class="discuss-card-time">${formatTime(r.created_at)}</span>
+                </div>
+                <div class="discuss-card-content">${escapeHtml(r.content)}</div>
+                ${canDel ? `<div class="discuss-card-actions"><button class="del-btn" onclick="doDelete(${r.id})">删除</button></div>` : ''}
+            </div>
+        </div>
+    </div>`;
+}
+
+function startReply(parentId) {
+    replyTargetId = parentId;
+    const box = document.getElementById('replyBox-' + parentId);
+    box.innerHTML = `
+        <div class="discuss-reply-inline">
+            <textarea id="replyInput-${parentId}" placeholder="写下回复..." rows="2"></textarea>
+            <button class="btn-primary" onclick="submitReply(${parentId})">回复</button>
+            <button class="cancel-reply" onclick="cancelReply(${parentId})">取消</button>
+        </div>`;
+    setTimeout(() => {
+        const ta = document.getElementById('replyInput-' + parentId);
+        if (ta) ta.focus();
+    }, 100);
+}
+
+function cancelReply(parentId) {
+    document.getElementById('replyBox-' + parentId).innerHTML = '';
+    replyTargetId = null;
+}
+
+async function submitComment() {
+    const input = document.getElementById('discussInput');
+    const content = input.value.trim();
+    if (!content) return;
+    const btn = document.getElementById('discussSubmitBtn');
+    btn.disabled = true;
+    try {
+        const resp = await fetch('/auth/api/comments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chapter_id: CHAPTER_ID, content: content})
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            input.value = '';
+            loadComments();
+        } else {
+            alert(data.message || '发送失败');
+        }
+    } catch(e) {
+        alert('网络错误');
+    }
+    btn.disabled = false;
+}
+
+async function submitReply(parentId) {
+    const input = document.getElementById('replyInput-' + parentId);
+    const content = input.value.trim();
+    if (!content) return;
+    try {
+        const resp = await fetch('/auth/api/comments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({chapter_id: CHAPTER_ID, content: content, parent_id: parentId})
+        });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            cancelReply(parentId);
+            loadComments();
+        } else {
+            alert(data.message || '回复失败');
+        }
+    } catch(e) {
+        alert('网络错误');
+    }
+}
+
+async function doDelete(commentId) {
+    if (!confirm('确认删除该评论？')) return;
+    try {
+        const resp = await fetch('/auth/api/comments/' + commentId, {method: 'DELETE'});
+        const data = await resp.json();
+        if (data.status === 'success') {
+            loadComments();
+        } else {
+            alert(data.message || '删除失败');
+        }
+    } catch(e) {
+        alert('网络错误');
+    }
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatTime(ts) {
+    if (!ts) return '';
+    const d = new Date(ts.replace(' ', 'T') + (ts.includes('Z') ? '' : 'Z'));
+    if (isNaN(d.getTime())) return ts;
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + day;
+}
+
+document.getElementById('discussInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitComment();
+    }
+});
+</script>
+
+<!-- 修改密码弹窗 -->
+<div class="modal-overlay" id="changePasswordModal" style="display:none;">
+    <div class="modal-box">
+        <h3>修改密码</h3>
+        <div class="form-group">
+            <label>旧密码</label>
+            <input type="password" id="cpOldPassword" placeholder="请输入旧密码">
+        </div>
+        <div class="form-group">
+            <label>新密码</label>
+            <input type="password" id="cpNewPassword" placeholder="请输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+            <label>确认新密码</label>
+            <input type="password" id="cpConfirmPassword" placeholder="请再次输入新密码">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitChangePassword()">确认修改</button>
+            <button class="btn btn-secondary" onclick="closeChangePasswordModal()">取消</button>
+        </div>
+        <p class="form-error" id="cpError" style="display:none;"></p>
+    </div>
+</div>
+<style>
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.modal-box { background:#fff; border-radius:8px; padding:30px; width:380px; max-width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.modal-box h3 { margin:0 0 20px; font-size:18px; }
+.form-group { margin-bottom:15px; }
+.form-group label { display:block; margin-bottom:5px; font-size:14px; color:#555; }
+.form-group input { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px; box-sizing:border-box; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.btn { padding:8px 20px; border:none; border-radius:4px; cursor:pointer; font-size:14px; }
+.btn-primary { background:#004a9f; color:#fff; }
+.btn-secondary { background:#eee; color:#333; }
+.form-error { color:#d32f2f; font-size:13px; margin-top:10px; }
+</style>
+<script>
+function openChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'flex';
+    document.getElementById('cpOldPassword').value = '';
+    document.getElementById('cpNewPassword').value = '';
+    document.getElementById('cpConfirmPassword').value = '';
+    document.getElementById('cpError').style.display = 'none';
+}
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+}
+async function submitChangePassword() {
+    const oldPwd = document.getElementById('cpOldPassword').value;
+    const newPwd = document.getElementById('cpNewPassword').value;
+    const confirmPwd = document.getElementById('cpConfirmPassword').value;
+    const errEl = document.getElementById('cpError');
+    if (!oldPwd || !newPwd || !confirmPwd) { errEl.textContent = '请填写所有字段'; errEl.style.display = 'block'; return; }
+    if (newPwd.length < 6) { errEl.textContent = '新密码至少6位'; errEl.style.display = 'block'; return; }
+    if (newPwd !== confirmPwd) { errEl.textContent = '两次输入的新密码不一致'; errEl.style.display = 'block'; return; }
+    try {
+        const resp = await fetch('/auth/api/change_password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({old_password: oldPwd, new_password: newPwd})
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert('修改成功，请重新登录');
+            window.location.href = '/auth/logout';
+        } else {
+            errEl.textContent = data.error || '修改失败';
+            errEl.style.display = 'block';
+        }
+    } catch(e) {
+        errEl.textContent = '网络错误';
+        errEl.style.display = 'block';
+    }
+}
+</script>
+{% endif %}
+</body>
+
+</html>

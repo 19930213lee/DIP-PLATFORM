@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像处理 - 数字图像处理教学平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ai_sidebar.css') }}">
+    <meta name="user-logged-in" content="true">
+</head>
+
+<body class="operation-page">
+
+    <!-- 顶部导航 -->
+    <header class="top-bar">
+        <a href="{{ url_for('chapters') }}" class="top-back" id="topBackLink">&larr; 返回章节理论</a>
+        <span class="top-title" id="chapterTitle">西南交通大学希望学院 · 人工智能学院 · 数字图像处理教学平台</span>
+        <span class="top-user">
+            {% if current_user %}
+                欢迎，<strong>{{ current_user.display_name }}（{{ current_user.student_id }}）</strong>
+                {% if current_user.role in ('teacher', 'admin') %}
+                    <a href="/auth/dashboard">数据中台</a>
+                {% endif %}
+                <a href="javascript:void(0)" onclick="openPwdModal()" style="color:#ffa94d;font-size:12px;">修改密码</a>
+                <a href="/auth/logout">退出</a>
+            {% else %}
+                <a href="/auth/login">登录</a>
+            {% endif %}
+        </span>
+    </header>
+
+    <!-- 主内容：左侧操作+结果，右侧代码面板 -->
+    <main class="operation-main-v2">
+
+        <!-- ========== 左侧：上传 + 选择 + 结果 + 参数 ========== -->
+        <div class="operation-left">
+            <!-- 上传 + 操作选择（紧凑顶部行） -->
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                <section class="panel-section" style="flex:1;min-width:260px;">
+                    <h3 class="section-title">上传图片</h3>
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="imageInput" accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif" hidden>
+                        <div class="upload-placeholder" id="uploadPlaceholder">
+                            <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+                                <rect x="6" y="8" width="36" height="32" rx="3" stroke="#888" stroke-width="2" />
+                                <circle cx="17" cy="18" r="3" fill="#888" />
+                                <path d="M6 33l10-10 8 8 6-6L42 37" stroke="#888" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            <p>点击或拖拽上传图片</p>
+                            <span class="upload-hint">JPG / PNG / BMP / TIFF，最大 5MB</span>
+                        </div>
+                        <img id="uploadPreview" class="upload-preview" alt="预览" style="display:none;">
+                    </div>
+                </section>
+
+                <section class="panel-section" style="flex:1;min-width:200px;">
+                    <h3 class="section-title">选择操作</h3>
+                    <select id="operationSelect" class="styled-select">
+                        <option value="">-- 请选择图像处理操作 --</option>
+                    </select>
+                </section>
+            </div>
+
+            <!-- 理论面板 -->
+            <div class="theory-card" id="theoryCard" style="display:none;">
+                <h3 class="theory-card-title" id="theoryTitle">
+                    <span class="theory-badge" id="theoryBadge"></span>
+                    <span id="theoryOpName"></span>
+                </h3>
+                <div class="theory-sections" id="theorySections"></div>
+            </div>
+
+            <!-- 处理结果 -->
+            <div class="result-card" id="resultCard">
+                <h3 class="result-card-title">处理结果</h3>
+                <div class="result-image-area" id="resultImageArea">
+                    <p class="result-placeholder">处理完成后，结果图像将显示在此处。</p>
+                </div>
+                <div class="result-actions" id="resultActions" style="display:none;">
+                    <button id="downloadBtn" class="btn-secondary">下载结果图片</button>
+                    <button id="viewAnalysisBtn" class="btn-secondary" style="display:none;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                            style="vertical-align:middle;margin-right:4px;">
+                            <rect x="2" y="1" width="12" height="14" rx="1" stroke="currentColor" stroke-width="1.5"
+                                fill="none" />
+                            <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                            <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                            <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                        </svg>
+                        查看分析报告
+                    </button>
+                </div>
+                <!-- AI 主动分析卡片 -->
+                <div class="ai-analysis-card" id="aiAnalysisCard" style="display:none;"></div>
+            </div>
+
+            <!-- 参数调节（在结果下方） -->
+            <section class="params-below" id="paramsSection" style="display:none;">
+                <h3 class="section-title">拖动参数实时调节</h3>
+                <div id="paramsContainer" class="params-container"></div>
+                <div class="live-hint" id="processBtn" style="margin-top:0.8rem;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <circle cx="8" cy="8" r="6" stroke="var(--primary-light)" stroke-width="2" />
+                        <circle cx="8" cy="8" r="2" fill="var(--primary-light)" class="pulse-dot" />
+                    </svg>
+                    拖动参数即可实时预览
+                </div>
+            </section>
+
+            <!-- 处理状态 -->
+            <div class="status-bar" id="statusCard">
+                <span class="status-text" id="statusArea">等待操作…请先上传图片并选择操作。</span>
+            </div>
+        </div>
+
+        <!-- ========== 右侧：代码面板 ========== -->
+        <div class="operation-right">
+            <div class="code-panel" id="codePanel">
+                <div class="code-panel-header">
+                    <span class="code-panel-title"><span class="lang-dot"></span>Python 实现代码</span>
+                    <button class="copy-btn" id="copyCodeBtn" onclick="copyCode()">复制代码</button>
+                </div>
+                <div class="code-panel-body">
+                    <pre id="codeContent">选择操作后显示对应的 Python 代码&#10;（含完整 import 和核心逻辑）</pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========== AI分析弹窗 ========== -->
+    <div class="modal-overlay" id="analysisModal" style="display:none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                        style="vertical-align:middle;margin-right:6px;">
+                        <rect x="2" y="1" width="14" height="16" rx="1" stroke="currentColor" stroke-width="1.5"
+                            fill="none" />
+                        <line x1="5" y1="5" x2="13" y2="5" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                        <line x1="5" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                        <line x1="5" y1="11" x2="10" y2="11" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                    </svg>
+                    量化分析报告
+                </span>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <p style="text-align:center;color:var(--text-light);">加载中…</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="modalCloseBtn">关闭报告</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AI 助手上下文注入（由 script.js 中的操作选择动态更新）
+        window.AI_CONTEXT = {};
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% if current_user %}
+    <script src="{{ url_for('static', filename='ai_sidebar.js') }}"></script>
+    {% endif %}
+{% if current_user %}
+<!-- 修改密码弹窗 -->
+<div class="modal-overlay" id="changePasswordModal" style="display:none;">
+    <div class="modal-box">
+        <h3>修改密码</h3>
+        <div class="form-group">
+            <label>旧密码</label>
+            <input type="password" id="cpOldPassword" placeholder="请输入旧密码">
+        </div>
+        <div class="form-group">
+            <label>新密码</label>
+            <input type="password" id="cpNewPassword" placeholder="请输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+            <label>确认新密码</label>
+            <input type="password" id="cpConfirmPassword" placeholder="请再次输入新密码">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitChangePassword()">确认修改</button>
+            <button class="btn btn-secondary" onclick="closeChangePasswordModal()">取消</button>
+        </div>
+        <p class="form-error" id="cpError" style="display:none;"></p>
+    </div>
+</div>
+<style>
+.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:10000; }
+.modal-box { background:#fff; border-radius:8px; padding:30px; width:380px; max-width:90%; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.modal-box h3 { margin:0 0 20px; font-size:18px; }
+.form-group { margin-bottom:15px; }
+.form-group label { display:block; margin-bottom:5px; font-size:14px; color:#555; }
+.form-group input { width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:4px; font-size:14px; box-sizing:border-box; }
+.modal-actions { display:flex; gap:10px; margin-top:20px; }
+.btn { padding:8px 20px; border:none; border-radius:4px; cursor:pointer; font-size:14px; }
+.btn-primary { background:#004a9f; color:#fff; }
+.btn-secondary { background:#eee; color:#333; }
+.form-error { color:#d32f2f; font-size:13px; margin-top:10px; }
+</style>
+<script>
+function openChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'flex';
+    document.getElementById('cpOldPassword').value = '';
+    document.getElementById('cpNewPassword').value = '';
+    document.getElementById('cpConfirmPassword').value = '';
+    document.getElementById('cpError').style.display = 'none';
+}
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').style.display = 'none';
+}
+async function submitChangePassword() {
+    const oldPwd = document.getElementById('cpOldPassword').value;
+    const newPwd = document.getElementById('cpNewPassword').value;
+    const confirmPwd = document.getElementById('cpConfirmPassword').value;
+    const errEl = document.getElementById('cpError');
+    if (!oldPwd || !newPwd || !confirmPwd) { errEl.textContent = '请填写所有字段'; errEl.style.display = 'block'; return; }
+    if (newPwd.length < 6) { errEl.textContent = '新密码至少6位'; errEl.style.display = 'block'; return; }
+    if (newPwd !== confirmPwd) { errEl.textContent = '两次输入的新密码不一致'; errEl.style.display = 'block'; return; }
+    try {
+        const resp = await fetch('/auth/api/change_password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({old_password: oldPwd, new_password: newPwd})
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            alert('修改成功，请重新登录');
+            window.location.href = '/auth/logout';
+        } else {
+            errEl.textContent = data.error || '修改失败';
+            errEl.style.display = 'block';
+        }
+    } catch(e) {
+        errEl.textContent = '网络错误';
+        errEl.style.display = 'block';
+    }
+}
+</script>
+{% endif %}
+</body>
+
+</html>

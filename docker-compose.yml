@@ -1,0 +1,25 @@
+services:
+  dip:
+    build: .
+    container_name: dip-app
+    ports:
+      - "9527:9527"
+    volumes:
+      - ./data:/app/data
+      - ./images:/app/images
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:9527/')"]
+      interval: 5s
+      timeout: 3s
+      retries: 8
+      start_period: 25s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: dip-tunnel
+    command: tunnel --no-autoupdate run --token eyJhIjoiYTQ2MDQyNDVlMzhiOTEzYTQwNmM2YThiYzRkNjBhODgiLCJ0IjoiNzdiMmFmNjgtYzk3Yy00ZWQ2LThlNmItN2MwNDQ4NTM3YWIzIiwicyI6Ill6RTFNVEprWVdFdE56QXdZaTAwWlRnMUxUaGxNRFl0WkRJNVkyVTNZVGxpTnpRMyJ9
+    restart: always
+    depends_on:
+      dip:
+        condition: service_healthy

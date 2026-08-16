@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>章节选择 - 数字图像处理教学平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ai_sidebar.css') }}">
+    <meta name="user-logged-in" content="true">
+</head>
+
+<body class="chapters-page">
+
+    <header class="top-bar">
+        <span class="top-title">西南交通大学希望学院 · 人工智能学院 · 数字图像处理教学平台</span>
+        <span class="top-user">
+            {% if current_user %}
+                欢迎，<strong>{{ current_user.display_name }}（{{ current_user.student_id }}）</strong>
+                {% if current_user.role in ('teacher', 'admin') %}
+                    <a href="/auth/dashboard">数据中台</a>
+                {% endif %}
+                <a href="javascript:void(0)" onclick="openPwdModal()" style="color:#ffa94d;font-size:12px;">修改密码</a>
+                <a href="/auth/logout">退出</a>
+            {% else %}
+                <a href="/auth/login">登录</a>
+            {% endif %}
+        </span>
+    </header>
+
+    <main class="chapters-main">
+        <h2 class="chapters-heading">请选择教学章节</h2>
+        <p class="chapters-sub">理实一体化教学平台 &nbsp;|&nbsp; 作者：李康乐</p>
+
+        <div class="chapters-grid" id="chaptersGrid">
+            <a href="/chapter/1" class="chapter-card">
+                <div class="chapter-number">01-02</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>绪论 &amp; 数字图像基础</h3>
+                    <p>数字图像处理概述、人类视觉感知、采样与量化、像素邻域、距离度量、图像插值</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/3" class="chapter-card">
+                <div class="chapter-number">03</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>灰度变换与空间滤波</h3>
+                    <p>直方图均衡化、伽马校正、均值/中值/高斯滤波、拉普拉斯锐化、USM锐化</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/4" class="chapter-card">
+                <div class="chapter-number">04</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>频率域滤波</h3>
+                    <p>傅里叶变换、理想/巴特沃斯/高斯低通与高通滤波、带通滤波</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/5" class="chapter-card">
+                <div class="chapter-number">05</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>图像复原与重建</h3>
+                    <p>噪声模型（高斯/椒盐）、均值/中值/NLM/维纳滤波复原</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/6" class="chapter-card">
+                <div class="chapter-number">06</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>彩色图像处理</h3>
+                    <p>RGB/HSV色彩空间、伪彩色处理、色调/饱和度/亮度调整</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/7" class="chapter-card">
+                <div class="chapter-number">07</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>小波变换与多分辨率处理</h3>
+                    <p>高斯/拉普拉斯金字塔、DWT降噪、多分辨率融合</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/8" class="chapter-card">
+                <div class="chapter-number">08</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>图像压缩</h3>
+                    <p>DCT变换、JPEG压缩模拟、游程编码、哈夫曼编码</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/9" class="chapter-card">
+                <div class="chapter-number">09</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>形态学图像处理</h3>
+                    <p>腐蚀与膨胀、开/闭运算、形态学梯度、顶帽/黑帽变换、骨架提取</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/10" class="chapter-card">
+                <div class="chapter-number">10</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>图像分割</h3>
+                    <p>Otsu/自适应阈值、K-means/Mean Shift聚类、分水岭、GrabCut</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/11" class="chapter-card">
+                <div class="chapter-number">11</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>表示和描述</h3>
+                    <p>轮廓提取、凸包、Hu矩、傅里叶描述子、形状匹配</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+
+            <a href="/chapter/12" class="chapter-card">
+                <div class="chapter-number">12</div>
+                <div class="chapter-divider"></div>
+                <div class="chapter-text">
+                    <h3>目标检测与识别</h3>
+                    <p>模板匹配、霍夫变换、Harris/SIFT/HOG特征检测、边缘检测对比</p>
+                </div>
+                <div class="chapter-arrow">&rarr;</div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        window.AI_CONTEXT = {};
+    </script>
+    {% if current_user %}
+    <script src="{{ url_for('static', filename='ai_sidebar.js') }}"></script>
+    {% endif %}
+
+    <!-- 修改密码弹窗 -->
+    <div id="pwdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#141a3c;border:1px solid rgba(100,140,255,0.2);border-radius:14px;width:380px;padding:28px;">
+            <h3 style="color:#fff;margin-bottom:18px;">修改密码</h3>
+            <div style="margin-bottom:12px;"><label style="font-size:13px;color:#8a9bc0;display:block;">旧密码</label><input id="pwdOld" type="password" style="width:100%;padding:10px;border:1px solid rgba(100,140,255,0.2);border-radius:6px;background:rgba(15,20,50,0.8);color:#e0e0e0;font-size:14px;margin-top:4px;"></div>
+            <div style="margin-bottom:12px;"><label style="font-size:13px;color:#8a9bc0;display:block;">新密码</label><input id="pwdNew" type="password" style="width:100%;padding:10px;border:1px solid rgba(100,140,255,0.2);border-radius:6px;background:rgba(15,20,50,0.8);color:#e0e0e0;font-size:14px;margin-top:4px;"></div>
+            <div style="margin-bottom:12px;"><label style="font-size:13px;color:#8a9bc0;display:block;">确认新密码</label><input id="pwdConfirm" type="password" style="width:100%;padding:10px;border:1px solid rgba(100,140,255,0.2);border-radius:6px;background:rgba(15,20,50,0.8);color:#e0e0e0;font-size:14px;margin-top:4px;"></div>
+            <div id="pwdMsg" style="text-align:center;min-height:18px;font-size:13px;margin-bottom:8px;"></div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button onclick="closePwdModal()" style="padding:8px 18px;border:1px solid rgba(100,140,255,0.2);border-radius:6px;background:transparent;color:#7a8bb5;font-size:13px;cursor:pointer;">取消</button>
+                <button onclick="changePwd()" style="padding:8px 18px;border:none;border-radius:6px;background:linear-gradient(135deg,#3a6fff,#5a4fff);color:#fff;font-size:13px;cursor:pointer;">确认修改</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openPwdModal(){document.getElementById('pwdModal').style.display='flex';document.getElementById('pwdOld').value='';document.getElementById('pwdNew').value='';document.getElementById('pwdConfirm').value='';document.getElementById('pwdMsg').textContent='';}
+        function closePwdModal(){document.getElementById('pwdModal').style.display='none';}
+        async function changePwd(){var o=document.getElementById('pwdOld').value,n=document.getElementById('pwdNew').value.trim(),c=document.getElementById('pwdConfirm').value.trim(),m=document.getElementById('pwdMsg');if(!o||!n){m.textContent='请填写所有字段';m.style.color='#ff6b6b';return;}if(n.length<6){m.textContent='新密码至少6位';m.style.color='#ff6b6b';return;}if(n!==c){m.textContent='两次新密码不一致';m.style.color='#ff6b6b';return;}try{var r=await fetch('/auth/api/change_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password:o,new_password:n})});var d=await r.json();if(d.status==='success'){m.textContent='修改成功，正在跳转...';m.style.color='#51cf66';setTimeout(function(){window.location.href='/auth/login';},1000);}else{m.textContent=d.message;m.style.color='#ff6b6b';}}catch(e){m.textContent='网络错误';m.style.color='#ff6b6b';}}
+    </script>
+</body>
+
+</html>
